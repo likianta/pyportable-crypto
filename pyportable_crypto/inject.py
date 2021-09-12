@@ -61,11 +61,11 @@ def inject(filename, globals_, locals_, ciphertext: bytes):
         def _unpad(s: bytes) -> bytes:
             return s[:-ord(s[len(s) - 1:])]
         
-        data = b64decode(data)  # type: bytes
+        _data = b64decode(data)  # type: bytes
         _key = sha256(key.encode('utf-8')).digest()  # type: bytes
-        iv = data[:AES.block_size]
+        iv = _data[:AES.block_size]
         cipher = AES.new(_key, AES.MODE_CBC, iv)
-        return _unpad(cipher.decrypt(data[AES.block_size:])).decode('utf-8')
+        return _unpad(cipher.decrypt(_data[AES.block_size:])).decode('utf-8')
     
     try:
         exec(__decrypt_data(ciphertext, key), globals_, locals_)

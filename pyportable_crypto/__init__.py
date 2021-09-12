@@ -10,4 +10,4 @@ from .encrypt import encrypt_data
 from .encrypt import encrypt_file
 from .inject import inject
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'

@@ -8,21 +8,22 @@ def decrypt_file(file_i, file_o=None, key=None) -> str:
     if not key:
         raise Exception
     with open(file_i, 'rb') as f:
-        data = f.read()
-    data = decrypt_data(data, key)
+        enc_data = f.read()
+    dec_data = decrypt_data(enc_data, key)
     if file_o:
         with open(file_o, 'w', encoding='utf-8') as f:
-            f.write(data)
-    return data
+            f.write(dec_data)
+    return dec_data
 
 
-def decrypt_data(data: bytes, key: str) -> str:
-    data = b64decode(data)  # type: bytes
+def decrypt_data(enc_data: bytes, key: str) -> str:
+    _enc_data = b64decode(enc_data)  # type: bytes
     key = sha256(key.encode('utf-8')).digest()  # type: bytes
-
-    iv = data[:AES.block_size]
+    iv = _enc_data[:AES.block_size]
     cipher = AES.new(key, AES.MODE_CBC, iv)
-    return _unpad(cipher.decrypt(data[AES.block_size:])).decode('utf-8')
+    _dec_data = _unpad(cipher.decrypt(_enc_data[AES.block_size:]))  # type: bytes
+    dec_data = _dec_data.decode('utf-8')  # type: str
+    return dec_data
 
 
 def _unpad(s: bytes) -> bytes:

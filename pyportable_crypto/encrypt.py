@@ -14,11 +14,11 @@ def encrypt_file(file_i, file_o, key: str):
 
 
 def encrypt_data(data: str, key: str) -> bytes:
-    data = _pad(data).encode('utf-8')  # type: bytes
-    key = sha256(key.encode('utf-8')).digest()  # type: bytes
+    _data = _pad(data).encode('utf-8')  # type: bytes
+    _key = sha256(key.encode('utf-8')).digest()  # type: bytes
     iv = urandom(AES.block_size)  # type: bytes
-    cipher = AES.new(key, AES.MODE_CBC, iv)
-    return b64encode(iv + cipher.encrypt(data))
+    cipher = AES.new(_key, AES.MODE_CBC, iv)
+    return b64encode(iv + cipher.encrypt(_data))
 
 
 def _pad(s: str, size=AES.block_size) -> str:
