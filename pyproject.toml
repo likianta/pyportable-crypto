@@ -11,7 +11,7 @@ url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple/"
 default = true
 
 [tool.poetry.dependencies]
-python = ">=3"
+python = ">=3.6"  # in python 3.6 there's a standard module called 'secrets'.
 pycryptodomex = ""
 
 [tool.poetry.dev-dependencies]
