@@ -9,3 +9,5 @@ from .decrypt import decrypt_file
 from .encrypt import encrypt_data
 from .encrypt import encrypt_file
 from .inject import inject
+
+__version__ = '0.1.1'
