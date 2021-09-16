@@ -1,8 +1,7 @@
-from base64 import b64encode
 from hashlib import sha256
-from os import urandom
 
-from Cryptodome.Cipher import AES
+from ._pyaes_snippet import AESModeOfOperationCBC
+from .formatter import formatters
 
 
 def encrypt_file(file_i, file_o, key: str):
@@ -13,15 +12,21 @@ def encrypt_file(file_i, file_o, key: str):
     return file_o
 
 
-def encrypt_data(data: str, key: str) -> bytes:
+def encrypt_data(data: str, key: str, size=16, fmt='base64') -> bytes:
     _data = _pad(data).encode('utf-8')  # type: bytes
     _key = sha256(key.encode('utf-8')).digest()  # type: bytes
-    iv = urandom(AES.block_size)  # type: bytes
-    cipher = AES.new(_key, AES.MODE_CBC, iv)
-    return b64encode(iv + cipher.encrypt(_data))
+    
+    cipher = AESModeOfOperationCBC(_key)
+    
+    # # _enc_data = cipher.encrypt(_data)  # type: bytes
+    _enc_data = b''
+    for i in range(0, len(_data), size):
+        _enc_data += cipher.encrypt(_data[i:i + size])
+    enc_data = formatters[fmt].encode(_enc_data)  # type: bytes
+    return enc_data
 
 
-def _pad(s: str, size=AES.block_size) -> str:
+def _pad(s: str, size=16) -> str:
     # sometimes len(s) doesn't equal to len(s.encode()), we should use bytes
     # length here.
     bytelen = len(s.encode('utf-8'))

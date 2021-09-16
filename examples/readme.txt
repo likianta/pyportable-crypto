@@ -1,1 +1,1 @@
-To run these examples, you need to install Python 3.8+.
+To run these examples, you need to install Python 3.8+ and pip install `lk-logger`, `lk-utils`.

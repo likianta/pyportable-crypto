@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "pyportable-crypto"
-version = "0.1.2"
-description = "Crypto plugin for Pyportable-Installer project."
+version = "0.2.0"
+description = "Crypto plugin for pyportable-installer project."
 authors = ["Likianta <likianta@foxmail.com>"]
 license = "MIT"
 
@@ -12,7 +12,6 @@ default = true
 
 [tool.poetry.dependencies]
 python = ">=3.6"  # in python 3.6 there's a standard module called 'secrets'.
-pycryptodomex = ""
 
 [tool.poetry.dev-dependencies]
 

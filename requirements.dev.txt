@@ -1,1 +1,3 @@
-lk-logger>=4.0.2
+lk-logger
+pyaes
+pycryptodomex

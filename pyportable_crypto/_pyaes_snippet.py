@@ -1,122 +1,41 @@
-"""
-Notes:
-    Pure Python implementation, no external imports (excluded Python standard
-    libraries).
-"""
+# The MIT License (MIT)
+#
+# Copyright (c) 2014 Richard Moore
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
 
+# This is a pure-Python implementation of the AES algorithm and AES common
+# modes of operation.
 
-def __example_keygen() -> str:
-    """
-    All reverse and anti-reverse engineer battles focus on how to get the real
-    key from keygen function.
-    The example keygen function just returns real key to the caller, this is a
-    very dangerous operation, the real key mustn't be put in the script
-    directly, no matter if we compile this file to '.pyd' or '.so' etc.
-    """
-    
-    # def _invalidate():
-    #     pass
-    
-    # FIXME: use a more complicated method to generate KEY in runtime!
-    return '{KEY}'
-    #   see `pyportable_installer.compilers.pyportable_encryptor
-    #   ._generate_runtime_lib`
+# See: https://en.wikipedia.org/wiki/Advanced_Encryption_Standard
 
+# Honestly, the best description of the modes of operations are the wonderful
+# diagrams on Wikipedia. They explain in moments what my words could never
+# achieve. Hence the inline documentation here is sparer than I'd prefer.
+# See: https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation
 
-def inject(filename, globals_, locals_, ciphertext: bytes):
-    _validate_self_package()
-    _validate_source_file(filename)
-    
-    key = __example_keygen()
-    #   see `pyportable_installer.compiler.pyportable_encrypt`.
-    locals_['__PYMOD_HOOK__'] = {}
-    
-    def __decrypt_data(enc_data: bytes, key: str) -> str:
-        """
-        Notes:
-            1. Here we copy part of source code from `./decrypt.py`.
-               Note that do not import `.decrypt.decrypt_data` into this file,
-               because we want to avoid decryption hijecked from outside.
-            2. cython cannot handle reassignment (have no idea why this
-               happend):
-               for example:
-                    a = 'some string'
-                    
-                    # if we reassign a...
-                    a = a.encode()
-                    # -> pyd runtime error: cannot encode because `a` is bytes
-                    
-                    # then if we think `a` is bytes but don't know why...
-                    a = a.decode()
-                    # -> pyd runtime error: cannot decode because `a` is str
-                    
-               to resolve this weired issue, we should assign to a new variable
-               name:
-                    a = 'some string'
-                    b = a.encode()
-                    # it worked.
-        """
-        from base64 import b64decode
-        from hashlib import sha256
-        
-        def _unpad(s: bytes) -> bytes:
-            return s[:-ord(s[len(s) - 1:])]
-        
-        _enc_data = b64decode(enc_data)  # type: bytes
-        _key = sha256(key.encode('utf-8')).digest()  # type: bytes
-        
-        cipher = AESModeOfOperationCBC(_key)
-        
-        # # _dec_data = _unpad(cipher.decrypt(_enc_data))  # type: bytes
-        _dec_data = b''
-        for i in range(0, len(_enc_data), 16):
-            _dec_data += cipher.decrypt(_enc_data[i:i + 16])
-        dec_data = _unpad(_dec_data).decode('utf-8')  # type: str
-        return dec_data
-    
-    try:
-        exec(__decrypt_data(ciphertext, key), globals_, locals_)
-    except Exception as e:
-        raise Exception(filename, e)
-    
-    try:
-        assert locals_['__PYMOD_HOOK__']
-    except AssertionError:
-        # it assumes the `plaintext` hadn't contained
-        # '__PYMOD_HOOK__.update(globals())' in its end lines.
-        raise Exception(filename, 'Invalid script code that has not hooked up '
-                                  'or updated `__PYMOD_HOOK__` dict.')
-    else:
-        return locals_['__PYMOD_HOOK__']
-    finally:
-        del key, globals_, locals_
+# Also useful, PyCrypto, a crypto library implemented in C with Python bindings:
+# https://www.dlitz.net/software/pycrypto/
 
+import copy
+import struct
 
-def _validate_self_package():
-    # TODO: check whether self package (pyportable_crypto) had been
-    #   modified or not. (tip: use md5 checksum.)
-    pass
-
-
-def _validate_source_file(filename):
-    from textwrap import dedent
-    from re import sub
-    
-    with open(filename, 'r', encoding='utf-8') as f:
-        text = f.read().rstrip()
-        text = sub(r"b'[^\']+'", "b'...'", text)
-        # see template generation at `pyportable_installer.compilers.pyportable
-        # _encryptor.PyportableEncryptor.__init__`
-        if text != dedent('''\
-            from pyportable_runtime import inject
-            globals().update(inject(__file__, globals(), locals(), b'...'))
-        ''').rstrip():
-            raise RuntimeError(filename, 'Decompling stopped because the '
-                                         'source code was manipulated!')
-
-
-# ------------------------------------------------------------------------------
-# copy from `./_pyaes_snippet.py`
 
 def _compact_word(word):
     return (word[0] << 24) | (word[1] << 16) | (word[2] << 8) | word[3]
@@ -556,7 +475,6 @@ class AES(object):
         KC = len(key) // 4
         
         # Convert the key into ints
-        import struct
         tk = [struct.unpack('>i', key[i:i + 4])[0] for i in range(0, len(key), 4)]
         
         # Copy values into round key arrays
@@ -633,8 +551,7 @@ class AES(object):
                         self.T3[(t[(i + s2) % 4] >> 8) & 0xFF] ^
                         self.T4[t[(i + s3) % 4] & 0xFF] ^
                         self._Ke[r][i])
-            from copy import copy
-            t = copy(a)
+            t = copy.copy(a)
         
         # The last round is special
         result = []
@@ -663,14 +580,12 @@ class AES(object):
         # Apply round transforms
         for r in range(1, rounds):
             for i in range(0, 4):
-                # noinspection PyUnresolvedReferences
                 a[i] = (self.T5[(t[i] >> 24) & 0xFF] ^
                         self.T6[(t[(i + s1) % 4] >> 16) & 0xFF] ^
                         self.T7[(t[(i + s2) % 4] >> 8) & 0xFF] ^
                         self.T8[t[(i + s3) % 4] & 0xFF] ^
                         self._Kd[r][i])
-            from copy import copy
-            t = copy(a)
+            t = copy.copy(a)
         
         # The last round is special
         result = []
@@ -747,3 +662,6 @@ class AESModeOfOperationCBC(AESBlockModeOfOperation):
         self._last_cipherblock = cipherblock
         
         return _bytes_to_string(plaintext)
+
+
+__all__ = ['AESModeOfOperationCBC']
