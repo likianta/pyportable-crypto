@@ -5,7 +5,7 @@ Notes:
 """
 
 
-def inject(filename, globals_, locals_, ciphertext: bytes):
+def _main(filename, globals_, locals_, ciphertext: bytes):
     if not ciphertext:
         return {}
     

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyportable-crypto"
-version = "0.2.0"
+version = "0.2.1"
 description = "Crypto plugin for pyportable-installer project."
 authors = ["Likianta <likianta@foxmail.com>"]
 license = "MIT"
