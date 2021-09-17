@@ -35,7 +35,10 @@ def inject(globals_: dict, locals_: dict, ciphertext: bytes) -> dict:
     return _main(ciphertext, globals_, locals_, 'PYMOD_HOOK')
 
 
-def encrypt_data(plaintext: str) -> bytes:
+# noinspection PyUnusedLocal
+def encrypt_data(plaintext: str, *args) -> bytes:
+    # `*args` has no usage but made for compliance with
+    # `./encrypt.py > func:encrypt_data`.
     return _main(plaintext, None, None, 'ENCRYPTED')
 
 
