@@ -22,10 +22,10 @@ def inject(globals_: dict, locals_: dict, ciphertext: bytes) -> dict:
             text = sub(r"b'[^\']+'", "b'...'", text)
             # see template generation at `pyportable_installer.compilers.pyportable
             # _encryptor.PyportableEncryptor.__init__`
-            if text != dedent('''\
+            if text != dedent('''
                 from pyportable_runtime import inject
                 globals().update(inject(globals(), locals(), b'...'))
-            ''').rstrip():
+            ''').strip():
                 raise RuntimeError(filename, 'Decompling stopped because the '
                                              'source code was manipulated!')
     
