@@ -4,56 +4,63 @@ Notes:
     libraries).
 """
 
+
 # __all__ = ['decrypt', 'encrypt']
 
 
-def decrypt(globals_: dict, locals_: dict, ciphertext: bytes) -> dict:
+# noinspection PyUnusedLocal
+def encrypt(plaintext: str, *args, add_shell=False) -> bytes:
+    # `*args` has no effect, just be compatible with
+    #   `../encrypt.py:[func]encrypt_data`.
+    return __main(plaintext, 'encrypt', add_shell=add_shell)
+
+
+def decrypt(
+        ciphertext: bytes,
+        globals_: dict = None, locals_: dict = None
+) -> dict:
+    # noinspection PyUnusedLocal
     def _validate_self():
         # TODO: check whether self package (pyportable_crypto) had been
         #   modified or not. (tip: use md5 checksum.)
         pass
-
+    
     # noinspection PyUnusedLocal
     def _validate_caller(filename):
-        from textwrap import dedent
         from re import sub
+        from textwrap import dedent
         
         with open(filename, 'r', encoding='utf-8') as f:
-            text = f.read().rstrip()
-            text = sub(r"b'[^\']+'", "b'...'", text)
-            # see template generation at `pyportable_installer.compilers.pyportable
-            # _encryptor.PyportableEncryptor.__init__`
-            if text != dedent('''
-                from pyportable_runtime import inject
-                globals().update(inject(globals(), locals(), b'...'))
-            ''').strip():
-                raise RuntimeError(filename, 'Decompling stopped because the '
-                                             'source code was manipulated!')
+            text = f.read().strip()
+        text = sub(r"b'[^\']+'", "b'...'", text)
+        # see template generation at `pyportable_installer.compilers
+        # .pyportable_encryptor.PyportableEncryptor.__init__`
+        if text != dedent('''
+            from pyportable_runtime import decrypt
+            globals().update(decrypt(b'...', globals(), locals()))
+        ''').strip():
+            raise RuntimeError(filename, 'Decompling stopped because the '
+                                         'source code was manipulated!')
     
-    _validate_self()
+    # _validate_self()
     # _validate_caller(globals_['__file__'])
     
-    return __main(ciphertext, globals_, locals_, 'PYMOD_HOOK')
+    return __main(ciphertext, 'decrypt', globals_=globals_, locals_=locals_)
 
 
-# noinspection PyUnusedLocal
-def encrypt(plaintext: str, *args) -> bytes:
-    # `*args` has no effect, just be compatible with
-    #   `../encrypt.py:[func]encrypt_data`.
-    return __main(plaintext, None, None, 'ENCRYPTED')
-
-
-def __main(data, globals_, locals_, ret_type: str):
+def __main(data, action: str, **kwargs):
     """
     Args:
         data: union[str, bytes]
-        globals_: optional[dict]
-        locals_: optional[dict]
-        ret_type: str['PYMOD_HOOK', 'ENCRYPTED']
+        action: str['encrypt', 'decrypt']
+        **kwargs:
+            globals_: optional[dict]
+            locals_: optional[dict]
+            hook: bool
     """
     
     # --------------------------------------------------------------------------
-    # copied from `~/lib/pyaes_snippet/pyaes_snippet.py`
+    # copied from `../pyaes_snippet.py`
     
     def _compact_word(word):
         return (word[0] << 24) | (word[1] << 16) | (word[2] << 8) | word[3]
@@ -779,8 +786,23 @@ def __main(data, globals_, locals_, ret_type: str):
     key = __example_keygen()
     #   see `pyportable_installer.compiler.pyportable_encrypt`.
     
-    if ret_type == 'PYMOD_HOOK':
-        locals_['__PYMOD_HOOK__'] = {}
+    if action == 'encrypt':
+        add_shell = kwargs['add_shell']
+        if add_shell:
+            data += '\n__PYPORTABLE_CRYPTO_HOOK__.update(globals())'
+            data = __encrypt_data(data, key)
+            from textwrap import dedent
+            return dedent('''
+                from pyportable_runtime import decrypt
+                globals.update(decrypt({}, globals(), locals()))
+            ''').format(data).strip()
+        else:
+            return __encrypt_data(data, key)
+    
+    elif action == 'decrypt':
+        globals_ = kwargs.get('globals_', {})
+        locals_ = kwargs.get('locals_', {})
+        locals_['__PYPORTABLE_CRYPTO_HOOK__'] = {}
         
         try:
             exec(__decrypt_data(data, key), globals_, locals_)
@@ -788,19 +810,18 @@ def __main(data, globals_, locals_, ret_type: str):
             raise e
         
         try:
-            assert locals_['__PYMOD_HOOK__']
+            assert locals_['__PYPORTABLE_CRYPTO_HOOK__']
         except AssertionError:
             # it assumes the `plaintext` hadn't contained
-            # '__PYMOD_HOOK__.update(globals())' in its end lines.
-            raise AssertionError('Invalid script code that has not hooked up '
-                                 'or updated `__PYMOD_HOOK__` dict.')
+            # '__PYPORTABLE_CRYPTO_HOOK__.update(globals())' in its end lines.
+            raise AssertionError(
+                'Invalid script code that has not hooked up or updated '
+                '`__PYPORTABLE_CRYPTO_HOOK__` dict.'
+            )
         else:
-            return locals_['__PYMOD_HOOK__']
+            return locals_['__PYPORTABLE_CRYPTO_HOOK__']
         finally:
             del key, globals_, locals_
     
-    elif ret_type == 'ENCRYPTED':
-        return __encrypt_data(data, key)
-    
     else:
-        raise ValueError(ret_type)
+        raise ValueError(action)

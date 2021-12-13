@@ -15,3 +15,6 @@ def __init__():
 
 __init__()
 del __init__
+
+__version__ = "{VERSION}"
+fingerprint = "{FINGERPRINT}"

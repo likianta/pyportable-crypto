@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyportable-crypto"
-version = "0.3.0"
+version = "1.0.0a0"
 description = "Crypto plugin for pyportable-installer project."
 authors = ["Likianta <likianta@foxmail.com>"]
 license = "MIT"
@@ -11,8 +11,10 @@ url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple/"
 default = true
 
 [tool.poetry.dependencies]
-python = ">=3.6"  # in python 3.6 there's a standard module called 'secrets'.
+python = "^3.8"
 dill = ""
+lk-logger = ""
+lk-utils = ""
 
 [tool.poetry.dev-dependencies]
 

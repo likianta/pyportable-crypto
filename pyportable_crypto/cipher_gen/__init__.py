@@ -1,1 +1,1 @@
-from .publish import generate_custom_cipher_package
+from .generator import generate_custom_cipher_package
