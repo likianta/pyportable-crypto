@@ -20,13 +20,13 @@ def decrypt(
         globals_: dict = None, locals_: dict = None
 ) -> dict:
     # noinspection PyUnusedLocal
-    def _validate_self():
+    def __validate_self():
         # TODO: check whether self package (pyportable_crypto) had been
         #   modified or not. (tip: use md5 checksum.)
         pass
     
     # noinspection PyUnusedLocal
-    def _validate_caller(filename):
+    def __validate_caller(filename):
         from re import sub
         from textwrap import dedent
         
@@ -41,11 +41,41 @@ def decrypt(
         ''').strip():
             raise RuntimeError(filename, 'Decompling stopped because the '
                                          'source code was manipulated!')
+
+    def __anti_builtin_modifications():
+        """
+        Detect whether builtin function or methods had beed modified or
+        replaced with malicious function from the external attacker.
+        
+        Notes:
+            The important buitins are hashlib.sha256 and exec. The former got
+            touch with the `key`, the latter got touch with the `plain text`.
+            
+        How to detect:
+            Everything has `__dict__`, but the builtins don't.
+        """
+        try:
+            import hashlib
+            hashlib.sha256.__getattribute__('__dict__')
+        except AttributeError as e:
+            if str(e) == "AttributeError: 'builtin_function_or_method' " \
+                         "object has no attribute '__dict__'":
+                return
+        try:
+            exec.__getattribute__('__dict__')
+        except AttributeError as e:
+            if str(e) == "AttributeError: 'builtin_function_or_method' " \
+                         "object has no attribute '__dict__'":
+                return
+        raise Exception('builtin module has been modified!')
+
+    # __validate_self()
+    # __validate_caller(globals_['__file__'])
+    __anti_builtin_modifications()
     
-    # _validate_self()
-    # _validate_caller(globals_['__file__'])
-    
-    return __main(ciphertext, 'decrypt', globals_=globals_, locals_=locals_)
+    return __main(ciphertext, 'decrypt',
+                  globals_=globals_ or {},
+                  locals_=locals_ or {})
 
 
 def __main(data, action: str, **kwargs):

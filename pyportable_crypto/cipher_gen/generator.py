@@ -40,16 +40,20 @@ class ProcessFinished(Exception):
 def _init_check(key, dir_o):
     assert key, '`key` must not be empty!'
     assert os.path.exists(dir_o), f'`dir_o` ({dir_o}) must exist!'
+    
     if os.path.exists(f'{dir_o}/pyportable_runtime'):
         sys.path.append(dir_o)
-        from pyportable_runtime import fingerprint  # noqa
-        if _validate_fingerprint(fingerprint, key):
-            raise ProcessFinished
-        else:
-            raise FileExistsError(
-                'pyportable-runtime package already exists in target folder! '
-                'please move or delete it to re-generate.'
-            )
+        
+        import pyportable_runtime as ppr  # noqa
+        from .. import __version__
+        if ppr.__version__ == __version__:
+            if _validate_fingerprint(ppr.fingerprint, key):
+                raise ProcessFinished
+        
+        raise FileExistsError(
+            'pyportable-runtime package already exists in target folder! '
+            'please move or delete it to re-generate.'
+        )
 
 
 def generate_custom_cipher_package(key: str, dir_o: str):

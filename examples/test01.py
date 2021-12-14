@@ -1,6 +1,7 @@
+from lk_logger import lk
+
 from pyportable_crypto import decrypt_data
 from pyportable_crypto import encrypt_data
-from lk_logger import lk
 
 
 def main(plain_text, key):

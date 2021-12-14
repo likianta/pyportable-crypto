@@ -65,8 +65,8 @@ from pyportable_crypto import Compiler
 from uuid import uuid1
 compiler = Compiler(key=str(uuid1()), dir_o='~/my_project/lib')
 #   `[param]dir_o` is the dir to generate a custom runtime package in it.
-#   it means a package `{dir_o}/pypurtable_runtiem` will be created.
-#   the `[param]key` is stored in pypurtable_runtiem and will be used for 
+#   it means a package `{dir_o}/pyportable_runtiem` will be created.
+#   the `[param]key` is stored in pyportable_runtiem and will be used for 
 #   loading py-encrypted files in user's computer.
 
 # compile single file
