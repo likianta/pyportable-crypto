@@ -1,4 +1,7 @@
 /.idea/
 /dist/
+/sidework/cache/*
 /tests/
 __pycache__
+
+!/sidework/cache/.gitkeep

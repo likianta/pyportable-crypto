@@ -1,3 +1,2 @@
-dill
 lk-logger
-lk-utils
+lk-utils >= 2.1.0

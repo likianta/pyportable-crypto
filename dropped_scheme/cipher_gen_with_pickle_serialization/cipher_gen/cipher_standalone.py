@@ -42,8 +42,7 @@ def decrypt(
             raise RuntimeError(filename, 'Decompling stopped because the '
                                          'source code was manipulated!')
 
-    # noinspection PyUnusedLocal
-    def __anti_builtin_modifications():  # DELETE ME
+    def __anti_builtin_modifications():
         """
         Detect whether builtin function or methods had beed modified or
         replaced with malicious function from the external attacker.
@@ -72,6 +71,7 @@ def decrypt(
 
     # __validate_self()
     # __validate_caller(globals_['__file__'])
+    __anti_builtin_modifications()
     
     return __main(ciphertext, 'decrypt',
                   globals_=globals_ or {},
@@ -817,18 +817,18 @@ def __main(data, action: str, **kwargs):
     #   see `pyportable_installer.compiler.pyportable_encrypt`.
     
     if action == 'encrypt':
-        if kwargs['add_shell']:
+        add_shell = kwargs['add_shell']
+        if add_shell:
             data += '\n__PYPORTABLE_CRYPTO_HOOK__.update(globals())'
-        #     data = __encrypt_data(data, key)
-        #     from textwrap import dedent
-        #     return dedent('''
-        #         from pyportable_runtime import decrypt
-        #         globals.update(decrypt({}, globals(), locals()))
-        #     ''').format(data).strip().encode('utf-8')
-        # else:
-        #     return __encrypt_data(data, key)
-        return __encrypt_data(data, key)
-
+            data = __encrypt_data(data, key)
+            from textwrap import dedent
+            return dedent('''
+                from pyportable_runtime import decrypt
+                globals.update(decrypt({}, globals(), locals()))
+            ''').format(data).strip()
+        else:
+            return __encrypt_data(data, key)
+    
     elif action == 'decrypt':
         globals_ = kwargs.get('globals_', {})
         locals_ = kwargs.get('locals_', {})
