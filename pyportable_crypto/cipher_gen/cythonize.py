@@ -11,7 +11,6 @@ from Cython.Build import cythonize  # noqa
 
 # usage: <python> <this_file> <file_to_be_compiled>
 # e.g. python ./template.py ./hello_world.py
-print(f'{argv = }')
 filepath = argv.pop(1)
 file_dir, filename = os.path.split(filepath)
 os.chdir(file_dir)

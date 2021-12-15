@@ -1,116 +1,143 @@
-import os
+"""
+requirements:
+    python packages:
+        cython
+        lk-logger
+        lk-utils
+    if you are using windows:
+        download mingw-w64 and add it to environment PATH.
+        tested in cmd: `gcc --version`
+    if you are using linux or macos:
+        make sure you have gcc installed.
+"""
+import os.path
 import shutil
 import sys
-from textwrap import indent
+from secrets import token_hex
+from time import time
 
-import dill
+from lk_logger import lk
 from lk_utils import dumps
 from lk_utils import loads
 from lk_utils import run_cmd_args
-
-curr_dir = os.path.dirname(__file__)
-template = f'{curr_dir}/template'
+from lk_utils.filesniff import currdir
 
 
-def _generate_fingerprint(key: str) -> str:
-    from hashlib import md5
-    from random import randint
+def generate_custom_cipher_package(
+        key: str, dist_dir: str, python_executable_path=sys.executable, **kwargs
+):
+    """
+    Args:
+        key: str.
+            the key cannot be empty.
+            if you want a random key, suggest using `uuid`, `secrets.token_hex`,
+            `secrets.token_urlsafe`, etc.
+        dist_dir: str.
+            we will generate a "pyportable_runtime" package in this directory.
+            if `dist_dir` doesn't exist, we will create it.
+            if `pyportable_runtime` already exists in it, we will raise an
+            exception immediately.
+            it is suggested to use a directory name which contains the python
+            version info. for example '~/my_custom_runtime_py3.8'.
+        python_executable_path: str.
+            the path to regular python interpreter which is installed in your
+            computer.
+            the site-packages is not needed. we will use our own in this folder
+            (see '<current_dir>/site-packages').
+        **kwargs:
+            temp_dir: str.
+                where to put the intermediate files.
+                if not specified, we will use '<current_dir>/temp/<random_id>'.
+                if specified but not exists, we will create it.
+    """
+    assert key, 'key cannot be empty'
+    lk.logt('[I4205]', key)
     
-    md5_instance = md5()
-    md5_instance.update(((key + key[::-1]) * randint(10, 20)).encode('utf-8'))
-    #   `(key + key[::-1])`: reduce the probility of collision (for example,
-    #       if we use `key` only, it couldn't be detected that if developer
-    #       changed last key by replicated.)
-    #   `randint(10, 20)`: repeat with random times to make it harder to guess.
-    #       (against the attackers)
-    return md5_instance.hexdigest()
-
-
-def _validate_fingerprint(fingerprint: str, key: str):
-    for i in range(10, 21):
-        if _generate_fingerprint(key * i) == fingerprint:
-            return True
-    return False
-
-
-class ProcessFinished(Exception):
-    pass
-
-
-def _init_check(key, dir_o):
-    assert key, '`key` must not be empty!'
-    assert os.path.exists(dir_o), f'`dir_o` ({dir_o}) must exist!'
-    
-    if os.path.exists(f'{dir_o}/pyportable_runtime'):
-        sys.path.append(dir_o)
-        
-        import pyportable_runtime as ppr  # noqa
-        from .. import __version__
-        if ppr.__version__ == __version__:
-            if _validate_fingerprint(ppr.fingerprint, key):
-                raise ProcessFinished
-        
-        raise FileExistsError(
-            'pyportable-runtime package already exists in target folder! '
-            'please move or delete it to re-generate.'
+    if not os.path.exists(dist_dir):
+        os.mkdir(dist_dir)
+    else:
+        assert not os.path.exists(dist_dir + '/pyportable_runtime'), (
+            f'make sure no "pyportable_runtime" package exists in "{dist_dir}"'
         )
-
-
-def generate_custom_cipher_package(key: str, dir_o: str):
-    try:
-        _init_check(key, dir_o)
-    except ProcessFinished:
-        return
-    except Exception as e:
-        raise e
     
-    dir_i = template
-    dir_o = f'{dir_o}/pyportable_runtime'
+    dir_i = currdir()
+    dir_m = kwargs.get('temp_dir', currdir() + '/cache/' + token_hex())
+    dir_o = dist_dir + '/pyportable_runtime'
+    if not os.path.exists(dir_m): os.mkdir(dir_m)
     os.mkdir(dir_o)
     
-    # file (1/3): __init__.py
-    _generate_file_0(f'{dir_i}/__init__.txt', f'{dir_o}/__init__.py', key)
-    # file (2/3): dill_loader.py
-    _generate_file_1(f'{dir_i}/dill_loader.py', f'{dir_o}/dill_loader.py')
-    # file (3/3): cipher.py
-    _generate_file_2(f'{dir_i}/cipher.txt', f'{dir_o}/cipher.py', key)
-    # generate 'cipher.pkl' from 'cipher.py'
-    _generate_file_3(f'{dir_o}/cipher.py')
+    file_i = dir_i + '/cipher_standalone.py'
+    file_m = dir_m + '/cipher.py'
+    file_o = dir_o + '/cipher.pyd'
     
+    code = loads(file_i)
+    assert '__KEY__' in code
+    code = code.replace('__KEY__', key)
+    dumps(code, file_m)
+    
+    lk.loga('compiling... (this may take several minutes)')
+    start = time()
+    run_cmd_args(
+        python_executable_path,
+        currdir() + '/cythonize.py',
+        os.path.abspath(file_m), 'build_ext', '--inplace'
+    )
+    lk.loga('compilation consumed {:.2f}s'.format(time() - start))
+    
+    file_m = dir_m + '/' + \
+             [x for x in os.listdir(dir_m) if x.endswith(('.pyd', '.so'))][0]
+    shutil.move(file_m, file_o)
+    
+    # make it to be package (create '__init__.py')
+    from textwrap import dedent
+    from pyportable_crypto import __version__ as crypto_version
+    pyversion = run_cmd_args(python_executable_path, '--version')
+    pyversion = tuple(map(int, pyversion.split(' ')[1].split('.')[:2]))
+    #   e.g. 'Python 3.8.10' -> (3, 8)
+    dumps(dedent('''\
+        encrypt = None
+        decrypt = None
+        
+    
+        def _init_check():
+            import sys
+            
+            current_pyversion = sys.version_info[:2]  # type: tuple
+            target_pyversion = {0}
+            if current_pyversion != target_pyversion:
+                raise Exception(
+                    "Python interpreter version doesn't matched!",
+                    "Required: Python {{}}, got {{}} ({{}})".format(
+                        ', '.join(map(str, target_pyversion)),
+                        ', '.join(map(str, current_pyversion)),
+                        sys.executable
+                    )
+                )
+        
+        
+        _init_check()
+        del _init_check
+        
+        from .cipher import decrypt  # noqa
+        from .cipher import encrypt  # noqa
+        
+        __version__ = '{1}'
+    ''').strip().format(pyversion, crypto_version), dir_o + '/__init__.py')
+    
+    # clean up intermediate folder
+    try:
+        shutil.rmtree(dir_m)
+    except:  # usually failed due to permission error...
+        # but we can delete others in this folder.
+        from lk_utils import find_dirs
+        _ = [shutil.rmtree(d)
+             for d in find_dirs(os.path.dirname(dir_m))
+             if d != dir_m]
+    
+    lk.loga('see result: {}'.format(dir_o))
     return dir_o
 
 
-def _generate_file_0(file_i, file_o, key):
-    from .. import __version__
-    text = loads(file_i)
-    text = text.format(
-        VERSION=__version__,
-        FINGERPRINT=_generate_fingerprint(key),
-    )
-    dumps(text, file_o)
-
-
-def _generate_file_1(file_i, file_o):
-    shutil.copyfile(file_i, file_o)
-
-
-def _generate_file_2(file_i, file_o, key):
-    code = loads(f'{curr_dir}/cipher_standalone.py')
-    # assert there is only one placeholder named '__KEY__'
-    code = code.replace('__KEY__', key)
-    code = loads(file_i).format(
-        SOURCE_CODE=indent(code, '    ').lstrip(),
-        DILL_PARENT_DIR=os.path.dirname(os.path.dirname(dill.__file__)),
-    )
-    dumps(code, file_o)
-
-
-def _generate_file_3(file_i):
-    run_cmd_args(sys.executable, file_i)
-    os.remove(file_i)
-
-
 if __name__ == '__main__':
-    print(generate_custom_cipher_package(
-        'hello world', '../../tests/cipher_test_3'
-    ))
+    from secrets import token_urlsafe
+    generate_custom_cipher_package(token_urlsafe(), '../../tests/folder0')

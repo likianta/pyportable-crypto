@@ -1,23 +1,41 @@
 """
-Notes:
-    Pure Python implementation, no external imports (excluded Python standard
-    libraries).
+pure python implementation, no external imports (unless python standard
+libraries).
+
+notes:
+    - do not use walrus operator in this module, cython doesn't support it.
+    - do not use relative imports, nor importing custom modules.
 """
+try:
+    from os.path import dirname
+    from os.path import exists
+    
+    file = dirname(__file__) + '/__salt__'
+    if exists(file):
+        with open(file, 'r', encoding='utf-8') as file:
+            __SALT_ENC__ = file.read().strip()  # type: str
+    else:
+        __SALT_ENC__ = ''  # enc: 'encrypted'
+except Exception:
+    __SALT_ENC__ = ''  # enc: 'encrypted'
+finally:
+    del dirname, exists, file
 
 
-# __all__ = ['decrypt', 'encrypt']
+# __all__ = ['encrypt', 'decrypt']
 
 
 # noinspection PyUnusedLocal
-def encrypt(plaintext: str, *args, add_shell=False) -> bytes:
+def encrypt(plaintext: str, *args, add_shell=False, salt=__SALT_ENC__) -> bytes:
     # `*args` has no effect, just be compatible with
     #   `../encrypt.py:[func]encrypt_data`.
-    return __main(plaintext, 'encrypt', add_shell=add_shell)
+    return __main(plaintext, 'encrypt', add_shell=add_shell, salt=salt)
 
 
 def decrypt(
         ciphertext: bytes,
-        globals_: dict = None, locals_: dict = None
+        globals_: dict = None, locals_: dict = None,
+        salt=__SALT_ENC__
 ) -> dict:
     # noinspection PyUnusedLocal
     def __validate_self():
@@ -41,41 +59,15 @@ def decrypt(
         ''').strip():
             raise RuntimeError(filename, 'Decompling stopped because the '
                                          'source code was manipulated!')
-
-    # noinspection PyUnusedLocal
-    def __anti_builtin_modifications():  # DELETE ME
-        """
-        Detect whether builtin function or methods had beed modified or
-        replaced with malicious function from the external attacker.
-        
-        Notes:
-            The important buitins are hashlib.sha256 and exec. The former got
-            touch with the `key`, the latter got touch with the `plain text`.
-            
-        How to detect:
-            Everything has `__dict__`, but the builtins don't.
-        """
-        try:
-            import hashlib
-            hashlib.sha256.__getattribute__('__dict__')
-        except AttributeError as e:
-            if str(e) == "AttributeError: 'builtin_function_or_method' " \
-                         "object has no attribute '__dict__'":
-                return
-        try:
-            exec.__getattribute__('__dict__')
-        except AttributeError as e:
-            if str(e) == "AttributeError: 'builtin_function_or_method' " \
-                         "object has no attribute '__dict__'":
-                return
-        raise Exception('builtin module has been modified!')
-
+    
     # __validate_self()
     # __validate_caller(globals_['__file__'])
     
-    return __main(ciphertext, 'decrypt',
-                  globals_=globals_ or {},
-                  locals_=locals_ or {})
+    return __main(
+        ciphertext, 'decrypt',
+        globals_=globals_ or {}, locals_=locals_ or {},
+        salt=salt
+    )
 
 
 def __main(data, action: str, **kwargs):
@@ -84,9 +76,15 @@ def __main(data, action: str, **kwargs):
         data: union[str, bytes]
         action: str['encrypt', 'decrypt']
         **kwargs:
-            globals_: optional[dict]
-            locals_: optional[dict]
+            globals_: dict
+            locals_: dict
             hook: bool
+            salt: str
+                the salt is used to make the private key more secure.
+                salt is open to be visible to others. but we conservatively
+                encrypt it with our private key before store it to
+                `__salt__.py`.
+                see also `.generator.generate_custom_cipher_package.`
     """
     
     # --------------------------------------------------------------------------
@@ -767,15 +765,57 @@ def __main(data, action: str, **kwargs):
         is a very dangerous operation, the real key mustn't be put in the
         script directly, no matter if we compile this file to '.pyd' or '.so'
         etc.
+        
+        See also `.generator.generate_custom_cipher_package:[code]:
+        [usage]'__KEY__'`.
+        
+        Attacker sample:
+            class MaliciousSalt(str):
+                
+                def __str__(self):  # escape str(...) conversion.
+                    return self
+                
+                def __add__(self, other):
+                    print('expose addition', other)
+                    return ''
+                
+                def __radd__(self, other):
+                    print('expose addition', other)
+                    return ''
+                
+                def __eq__(self, other):
+                    print('expose comparison', other)
+                    return False
+            
+            decrypt(b'...', salt=MaliciousSalt())
+            
+            # to prevent this attack, we need to:
+            #   1. use str(...) conversion. (although it can escape)
+            #   2. assert type(salt) is str.
+            #   3. (optional) everything has a __dict__, except built-in types.
+            #      so check this: `salt.__getattribute__('__dict__')`. if it
+            #      doesn't raise AttributeError, it may be malicious.
+            #   4. (optional) temporarily disable print function.
         """
+        salt = kwargs.get('salt', '')  # type: str
+        salt = str(salt)
+        assert type(salt) is str
+        try:
+            salt.__getattribute__('__dict__')
+        except AttributeError as e:
+            if str(e) != "'str' object has no attribute '__dict__'":
+                raise TypeError('illegal salt type', str(e))
         
-        # def _invalidate():
-        #     pass
-        
-        # FIXME: use a more complicated method to generate KEY in runtime!
-        return '__KEY__'
-        #   see `pyportable_installer.compilers.pyportable_encryptor
-        #   ._generate_runtime_lib`
+        if salt == '':
+            return '__KEY__'
+        elif salt == __SALT_ENC__:
+            # decrypt salt to get the real salt.
+            salt = __decrypt_data(salt.encode('utf-8'), '__KEY__'[:16])
+            return '__KEY__' + salt
+        else:
+            # the user (also known as developer) passed his custom salt value,
+            # we would believe that this is the real salt.
+            return '__KEY__' + salt
     
     def __encrypt_data(data: str, key: str) -> bytes:
         
@@ -813,9 +853,6 @@ def __main(data, action: str, **kwargs):
     
     # --------------------------------------------------------------------------
     
-    key = __example_keygen()
-    #   see `pyportable_installer.compiler.pyportable_encrypt`.
-    
     if action == 'encrypt':
         if kwargs['add_shell']:
             data += '\n__PYPORTABLE_CRYPTO_HOOK__.update(globals())'
@@ -827,15 +864,15 @@ def __main(data, action: str, **kwargs):
         #     ''').format(data).strip().encode('utf-8')
         # else:
         #     return __encrypt_data(data, key)
-        return __encrypt_data(data, key)
-
+        return __encrypt_data(data, __example_keygen())
+    
     elif action == 'decrypt':
         globals_ = kwargs.get('globals_', {})
         locals_ = kwargs.get('locals_', {})
         locals_['__PYPORTABLE_CRYPTO_HOOK__'] = {}
         
         try:
-            exec(__decrypt_data(data, key), globals_, locals_)
+            exec(__decrypt_data(data, __example_keygen()), globals_, locals_)
         except Exception as e:
             raise e
         
@@ -851,7 +888,7 @@ def __main(data, action: str, **kwargs):
         else:
             return locals_['__PYPORTABLE_CRYPTO_HOOK__']
         finally:
-            del key, globals_, locals_
+            del globals_, locals_
     
     else:
         raise ValueError(action)

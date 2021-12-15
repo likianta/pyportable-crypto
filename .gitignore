@@ -1,7 +1,7 @@
 /.idea/
 /dist/
-/sidework/cache/*
+/pyportable_crypto/cipher_gen/cache/*
 /tests/
 __pycache__
 
-!/sidework/cache/.gitkeep
+!/pyportable_crypto/cipher_gen/cache/.gitkeep
