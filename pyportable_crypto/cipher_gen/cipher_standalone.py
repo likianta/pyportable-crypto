@@ -810,7 +810,8 @@ def __main(data, action: str, **kwargs):
             return '__KEY__'
         elif salt == __SALT_ENC__:
             # decrypt salt to get the real salt.
-            salt = __decrypt_data(salt.encode('utf-8'), '__KEY__'[:16])
+            salt = __decrypt_data(salt.encode('utf-8'), '__KEY__')
+            #   TODO: use '__KEY__'[:16] instead of '__KEY__'
             return '__KEY__' + salt
         else:
             # the user (also known as developer) passed his custom salt value,

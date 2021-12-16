@@ -15,4 +15,4 @@ from .decrypt import decrypt_file
 from .encrypt import encrypt_data
 from .encrypt import encrypt_file
 
-__version__ = '1.0.0b1'
+__version__ = '1.0.0'
