@@ -5,14 +5,15 @@ requirements:
         lk-logger
         lk-utils
     if you are using windows:
-        download mingw-w64 and add it to environment PATH.
-        tested in cmd: `gcc --version`
+        download mingw-w64 (https://sourceforge.net/projects/mingw-w64/files/)
+        and add it to environment PATH. then tested in cmd: `gcc --version`
     if you are using linux or macos:
         make sure you have gcc installed.
 """
 import os.path
 import shutil
 import sys
+from platform import system
 from secrets import token_hex
 from time import time
 
@@ -21,6 +22,8 @@ from lk_utils import dumps
 from lk_utils import loads
 from lk_utils import run_cmd_args
 from lk_utils.filesniff import currdir
+
+system = system().lower()
 
 
 def generate_custom_cipher_package(
@@ -68,7 +71,7 @@ def generate_custom_cipher_package(
     
     file_i = dir_i + '/cipher_standalone.py'
     file_m = dir_m + '/cipher.py'
-    file_o = dir_o + '/cipher.pyd'
+    file_o = dir_o + ('/cipher.pyd' if system == 'windows' else '/cipher.so')
     
     code = loads(file_i)
     assert '__KEY__' in code
@@ -140,4 +143,5 @@ def generate_custom_cipher_package(
 
 if __name__ == '__main__':
     from secrets import token_urlsafe
+    
     generate_custom_cipher_package(token_urlsafe(), '../../tests/folder0')
