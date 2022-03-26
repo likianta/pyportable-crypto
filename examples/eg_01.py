@@ -1,15 +1,13 @@
-from lk_logger import lk
-
 from pyportable_crypto import decrypt_data
 from pyportable_crypto import encrypt_data
 
 
 def main(plain_text, key):
     encrypted_text = encrypt_data(plain_text, key)
-    lk.loga(encrypted_text)
+    print(encrypted_text)
     
     plain_text = decrypt_data(encrypted_text, key)
-    lk.loga(plain_text)
+    print(plain_text)
 
 
 if __name__ == '__main__':

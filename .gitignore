@@ -1,7 +1,9 @@
 /.idea/
 /dist/
+/examples/*.dec.txt
+/examples/*.enc.txt
 /pyportable_crypto/cipher_gen/cache/*
 /tests/
-__pycache__
+__pycache__/
 
 !/pyportable_crypto/cipher_gen/cache/.gitkeep
