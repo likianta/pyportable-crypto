@@ -17,7 +17,6 @@ from platform import system
 from secrets import token_hex
 from time import time
 
-from lk_logger import lk
 from lk_utils import dumps
 from lk_utils import loads
 from lk_utils import run_cmd_args
@@ -54,7 +53,7 @@ def generate_custom_cipher_package(
                 if specified but not exists, we will create it.
     """
     assert key, 'key cannot be empty'
-    lk.logt('[I4205]', key)
+    print(':v2', key)
     
     if not os.path.exists(dist_dir):
         os.mkdir(dist_dir)
@@ -78,14 +77,14 @@ def generate_custom_cipher_package(
     code = code.replace('__KEY__', key)
     dumps(code, file_m)
     
-    lk.loga('compiling... (this may take several minutes)')
+    print('compiling... (this may take several minutes)')
     start = time()
     run_cmd_args(
         python_executable_path,
         currdir() + '/cythonize.py',
         os.path.abspath(file_m), 'build_ext', '--inplace'
     )
-    lk.loga('compilation consumed {:.2f}s'.format(time() - start))
+    print('compilation consumed {:.2f}s'.format(time() - start))
     
     file_m = dir_m + '/' + \
              [x for x in os.listdir(dir_m) if x.endswith(('.pyd', '.so'))][0]
@@ -132,12 +131,12 @@ def generate_custom_cipher_package(
         shutil.rmtree(dir_m)
     except:  # usually failed due to permission error...
         # but we can delete others in this folder.
-        from lk_utils import find_dirs
+        from lk_utils import find_dir_paths
         _ = [shutil.rmtree(d)
-             for d in find_dirs(os.path.dirname(dir_m))
+             for d in find_dir_paths(os.path.dirname(dir_m))
              if d != dir_m]
-    
-    lk.loga('see result: {}'.format(dir_o))
+
+    print('see result: {}'.format(dir_o))
     return dir_o
 
 

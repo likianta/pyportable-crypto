@@ -2,7 +2,6 @@ import os
 from typing import Callable
 from typing import Union
 
-from lk_logger import lk
 from lk_utils import dumps
 from lk_utils import loads
 from lk_utils.filesniff import find_dirs
@@ -25,19 +24,23 @@ class Compiler:
         self._encrypt = encrypt
         self._decrypt = decrypt
     
-    def compile_file(self, file_i: str, file_o: str, _h='parent'):
-        lk.logx('compiling in "{}": {} -> {}'.format(
+    def compile_file(self, file_i: str, file_o: str, _p=1):
+        # _p:
+        #   1: parent (frame)
+        #   2: grand-parent (frame)
+        #   3: great-grand-parent (frame)
+        print('compiling in "{}": {} -> {}'.format(
             os.path.dirname(file_o),
             os.path.basename(file_i),
             os.path.basename(file_o)
-        ), h=_h)
+        ), f':p{_p}')
         dumps(self._encrypt(loads(file_i), add_shell=True), file_o)
     
     def compile_dir(self, dir_i: str, dir_o: str, suffix=('.py',),
                     file_exists_scheme: Union[str, Callable] = 'raise_error'):
         
         def loop(dir_i, dir_o):
-            for fp, fn in find_files(dir_i, fmt='zip', suffix=suffix):
+            for fp, fn in find_files(dir_i, suffix=suffix):
                 file_i = fp
                 file_o = f'{dir_o}/{fn}'
                 
@@ -47,17 +50,13 @@ class Compiler:
                     elif file_exists_scheme == 'skip':
                         continue
                     elif file_exists_scheme == 'overwrite':
-                        self.compile_file(
-                            file_i, file_o, _h='greate_grand_parent'
-                        )
+                        self.compile_file(file_i, file_o, _p=3)
                     else:  # assume callable
                         file_exists_scheme(file_o)
                 else:
-                    self.compile_file(
-                        file_i, file_o, _h='greate_grand_parent'
-                    )
+                    self.compile_file(file_i, file_o, _p=3)
                 
-                for dp, dn in find_dirs(dir_i, fmt='zip'):
+                for dp, dn in find_dirs(dir_i):
                     sub_dir_i = dp
                     sub_dir_o = f'{dir_o}/{dn}'
                     if not os.path.exists(sub_dir_o):

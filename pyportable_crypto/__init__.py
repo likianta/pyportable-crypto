@@ -7,6 +7,9 @@ References:
 Warnings:
     docs/cythonize-known-issues.zh.md
 """
+import lk_logger
+lk_logger.setup(quiet=True, show_varnames=True)
+
 from . import cipher_gen
 from . import keygen
 from .compiler import Compiler
@@ -15,4 +18,4 @@ from .decrypt import decrypt_file
 from .encrypt import encrypt_data
 from .encrypt import encrypt_file
 
-__version__ = '1.0.0'
+__version__ = '1.0.1'

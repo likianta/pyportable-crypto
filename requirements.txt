@@ -1,2 +1,2 @@
-lk-logger
-lk-utils >= 2.1.0
+lk-logger >= 5.0.1
+lk-utils >= 2.2.0
