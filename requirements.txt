@@ -1,2 +1,3 @@
-lk-logger >= 5.0.1
-lk-utils >= 2.2.0
+argsense >= 0.4.0
+lk-logger >= 5.1.0
+lk-utils >= 2.3.0
