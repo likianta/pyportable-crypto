@@ -13,9 +13,9 @@ default = true
 
 [tool.poetry.dependencies]
 python = "^3.8"
-lk-logger = "^5.1.0"
-lk-utils = "^2.3.0"
-argsense = { version = "^0.4.1", optional = true }
+lk-logger = "^5.2.4"
+lk-utils = "^2.3.2"
+argsense = { version = "^0.4.2", optional = true }
 
 [tool.poetry.dev-dependencies]
 
