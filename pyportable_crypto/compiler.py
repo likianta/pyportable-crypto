@@ -10,7 +10,7 @@ from lk_utils.filesniff import find_files
 from .cipher_gen import cipher_standalone as core
 
 
-class Compiler:
+class PyCompiler:
     _encrypt: core.encrypt
     _decrypt: core.decrypt
     
@@ -18,11 +18,17 @@ class Compiler:
         import sys
         from .cipher_gen import generate_custom_cipher_package
         generate_custom_cipher_package(key, dir_o)
-        sys.path.append(dir_o)
+        sys.path.insert(0, dir_o)
         
         from pyportable_runtime import encrypt, decrypt  # noqa
         self._encrypt = encrypt
         self._decrypt = decrypt
+
+        from textwrap import dedent
+        self._template = dedent('''
+            from pyportable_runtime import decrypt
+            globals().update(decrypt({ciphertext}, globals(), locals()))
+        ''').strip()
     
     def compile_file(self, file_i: str, file_o: str, _p=1):
         # _p:
@@ -34,7 +40,9 @@ class Compiler:
             os.path.basename(file_i),
             os.path.basename(file_o)
         ), f':p{_p}')
-        dumps(self._encrypt(loads(file_i), add_shell=True), file_o)
+        data = self._encrypt(loads(file_i), add_shell=True)
+        code = self._template.format(ciphertext=data)
+        dumps(code, file_o)
     
     def compile_dir(self, dir_i: str, dir_o: str, suffix=('.py',),
                     file_exists_scheme: Union[str, Callable] = 'raise_error'):

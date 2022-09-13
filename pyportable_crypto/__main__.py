@@ -8,7 +8,7 @@ except ImportError:
 import os
 
 from . import __version__
-from .compiler import Compiler
+from .compiler import PyCompiler
 from .encrypt import encrypt_data
 
 print(__version__)
@@ -29,13 +29,21 @@ def encrypt_text(text: str, key: str = None):
 
 @cli.cmd()
 def compile_file(file_i: str, file_o: str, key: str):
-    compiler = Compiler(key, os.path.dirname(file_o))
+    """
+    args:
+        file_i: the file should be a '.py' file.
+        file_o: use the same extension name ('.py') as `file_i`.
+    """
+    compiler = PyCompiler(key, os.path.dirname(file_o))
     compiler.compile_file(file_i, file_o)
 
 
 @cli.cmd()
 def compile_dir(dir_i: str, dir_o: str, key: str):
-    compiler = Compiler(key, dir_o)
+    """
+    iterate all ".py" files in `dir_i` and compile them to `dir_o`.
+    """
+    compiler = PyCompiler(key, dir_o)
     compiler.compile_dir(dir_i, dir_o)
 
 

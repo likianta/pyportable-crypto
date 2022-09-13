@@ -12,10 +12,10 @@ lk_logger.setup(quiet=True, show_varnames=True)
 
 from . import cipher_gen
 from . import keygen
-from .compiler import Compiler
+from .compiler import PyCompiler
 from .decrypt import decrypt_data
 from .decrypt import decrypt_file
 from .encrypt import encrypt_data
 from .encrypt import encrypt_file
 
-__version__ = '1.0.2'
+__version__ = '1.0.3'
