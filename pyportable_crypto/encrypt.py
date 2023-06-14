@@ -1,18 +1,27 @@
 from hashlib import sha256
 
 from ._pyaes_snippet import AESModeOfOperationCBC
+from .formatter import T
 from .formatter import formatters
 
 
-def encrypt_file(file_i, file_o, key: str):
+def encrypt_file(
+        file_i: str,
+        file_o: str,
+        key: str,
+) -> None:
     with open(file_i, 'r', encoding='utf-8') as r:
         data = r.read()
     with open(file_o, 'wb') as w:
         w.write(encrypt_data(data, key))
-    return file_o
 
 
-def encrypt_data(data: str, key: str, size=16, fmt='base64') -> bytes:
+def encrypt_data(
+        data: str,
+        key: str,
+        size: int = 16,
+        fmt: T.FormatterName = 'base64',
+) -> bytes:
     _data = _pad(data).encode('utf-8')  # type: bytes
     _key = sha256(key.encode('utf-8')).digest()  # type: bytes
     

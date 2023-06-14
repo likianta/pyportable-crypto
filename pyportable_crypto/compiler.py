@@ -48,9 +48,9 @@ class PyCompiler:
                     file_exists_scheme: Union[str, Callable] = 'raise_error'):
         
         def loop(dir_i, dir_o):
-            for fp, fn in find_files(dir_i, suffix=suffix):
-                file_i = fp
-                file_o = f'{dir_o}/{fn}'
+            for f in find_files(dir_i, suffix=suffix):
+                file_i = f.path
+                file_o = f'{dir_o}/{f.name}'
                 
                 if os.path.exists(file_o):
                     if file_exists_scheme == 'raise_error':
@@ -64,9 +64,9 @@ class PyCompiler:
                 else:
                     self.compile_file(file_i, file_o, _p=3)
                 
-                for dp, dn in find_dirs(dir_i):
-                    sub_dir_i = dp
-                    sub_dir_o = f'{dir_o}/{dn}'
+                for d in find_dirs(dir_i):
+                    sub_dir_i = d.path
+                    sub_dir_o = f'{dir_o}/{d.name}'
                     if not os.path.exists(sub_dir_o):
                         os.mkdir(sub_dir_o)
                     loop(sub_dir_i, sub_dir_o)

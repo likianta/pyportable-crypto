@@ -20,7 +20,7 @@ from time import time
 from lk_utils import dumps
 from lk_utils import loads
 from lk_utils import run_cmd_args
-from lk_utils.filesniff import currdir
+from lk_utils import xpath
 
 system = system().lower()
 
@@ -62,8 +62,8 @@ def generate_custom_cipher_package(
             f'make sure no "pyportable_runtime" package exists in "{dist_dir}"'
         )
     
-    dir_i = currdir()
-    dir_m = kwargs.get('temp_dir', currdir() + '/cache/' + token_hex())
+    dir_i = xpath('.')
+    dir_m = kwargs.get('temp_dir', xpath(f'cache/{token_hex()}'))
     dir_o = dist_dir + '/pyportable_runtime'
     if not os.path.exists(dir_m): os.mkdir(dir_m)
     os.mkdir(dir_o)
@@ -81,7 +81,7 @@ def generate_custom_cipher_package(
     start = time()
     run_cmd_args(
         python_executable_path,
-        currdir() + '/cythonize.py',
+        xpath('cythonize.py'),
         os.path.abspath(file_m), 'build_ext', '--inplace'
     )
     print('compilation consumed {:.2f}s'.format(time() - start))
@@ -142,5 +142,4 @@ def generate_custom_cipher_package(
 
 if __name__ == '__main__':
     from secrets import token_urlsafe
-    
     generate_custom_cipher_package(token_urlsafe(), '../../tests/folder0')

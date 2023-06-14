@@ -1,8 +1,8 @@
 try:
     from argsense import cli  # noqa
 except ImportError:
-    print(':v4', 'Command line tool not found!\n'
-                 'Please install it with: `pip install argsense`')
+    print(':v4', 'command line tool not found!\n'
+                 'please install it with: `pip install argsense`')
     exit(-1)
 
 import os
