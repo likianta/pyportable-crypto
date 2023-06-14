@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyportable-crypto"
-version = "1.0.3"
+version = "1.1.0b0"
 homepage = "https://github.com/likianta/pyportable-crypto"
 description = "Crypto plugin for pyportable-installer project."
 authors = ["Likianta <likianta@foxmail.com>"]
@@ -13,11 +13,12 @@ default = true
 
 [tool.poetry.dependencies]
 python = "^3.8"
-lk-logger = "^5.2.4"
-lk-utils = "^2.3.2"
-argsense = { version = "^0.4.2", optional = true }
+lk-logger = "^5.6.1"
+lk-utils = "^2.5.6"
+argsense = { version = "^0.5.2", optional = true }
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.extras]
+cli = ["argsense"]
 
 [build-system]
 requires = ["poetry"]
