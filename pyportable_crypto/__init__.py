@@ -14,9 +14,9 @@ if True:
 from . import cipher_gen
 from . import keygen
 from .compiler import PyCompiler
+from .decrypt import decrypt
 from .decrypt import decrypt_data
-from .decrypt import decrypt_file
 from .encrypt import encrypt_data
-from .encrypt import encrypt_file
+from .encrypt import encrypt
 
 __version__ = '1.1.0'

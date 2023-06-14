@@ -1,28 +1,49 @@
+import typing as t
 from hashlib import sha256
 
+from ._io import dump_file
+from ._io import load_file
 from ._pyaes_snippet import AESModeOfOperationCBC
-from .formatter import T
+from .formatter import T as T0
 from .formatter import formatters
 
 
-def encrypt_file(
-        file_i: str,
-        file_o: str,
-        key: str,
-) -> None:
-    with open(file_i, 'r', encoding='utf-8') as r:
-        data = r.read()
-    with open(file_o, 'wb') as w:
-        w.write(encrypt_data(data, key))
+class T(T0):
+    FileMode = t.Literal['r', 'rb']
+    InData = t.Union[str, bytes]
+    OutData = bytes
+
+
+def encrypt(
+        data: T.InData = None,
+        key: str = None,
+        *,
+        from_file: str = None,
+        from_file_mode: T.FileMode = 'rb',
+        to_file: str = None,
+        to_file_mode: T.FileMode = 'wb',
+        size: int = 16,
+        fmt: T.FormatterName = 'base64',
+) -> T.OutData:
+    assert key
+    if not data:
+        assert from_file
+        data = load_file(from_file, from_file_mode)
+    out = encrypt_data(data, key, size, fmt)
+    if to_file:
+        assert to_file_mode == 'wb'
+        dump_file(out, to_file, 'wb')
+    return out
 
 
 def encrypt_data(
-        data: str,
+        data: T.InData,
         key: str,
         size: int = 16,
         fmt: T.FormatterName = 'base64',
-) -> bytes:
-    _data = _pad(data).encode('utf-8')  # type: bytes
+) -> T.OutData:
+    _data = _pad(data if isinstance(data, bytes)
+                 else data.encode('utf-8'))  # type: bytes
     _key = sha256(key.encode('utf-8')).digest()  # type: bytes
     
     cipher = AESModeOfOperationCBC(_key)
@@ -35,8 +56,8 @@ def encrypt_data(
     return enc_data
 
 
-def _pad(s: str, size=16) -> str:
-    # sometimes len(s) doesn't equal to len(s.encode()), we should use bytes
-    # length here.
-    bytelen = len(s.encode('utf-8'))
-    return s + (size - bytelen % size) * chr(size - bytelen % size)
+def _pad(s: bytes, size: int = 16) -> bytes:
+    return s + (
+            (size - len(s) % size)
+            * chr(size - len(s) % size)
+    ).encode('utf-8')

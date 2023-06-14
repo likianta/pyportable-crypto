@@ -1,46 +1,47 @@
+import typing as t
 from hashlib import sha256
-from typing import Literal
-from typing import Union
 
+from ._io import dump_file
+from ._io import load_file
 from ._pyaes_snippet import AESModeOfOperationCBC
 from .formatter import T as T0
 from .formatter import formatters
 
 
-class T:
-    FormatterName = T0.FormatterName
-    DecryptedData = Union[str, bytes]
-    DecryptedDataType = Literal['str', 'bin']
+class T(T0):
+    FileMode = t.Literal['r', 'rb']
+    InData = bytes
+    OutData = t.Union[str, bytes]
+    OutDataType = t.Literal['str', 'bin']
 
 
-def decrypt_file(
-        file_i: str,
-        file_o: str = None,
+def decrypt(
+        data: bytes = None,
         key: str = None,
-        type_o: T.DecryptedDataType = 'str',
-) -> T.DecryptedData:
-    if not key:
-        raise Exception
-    with open(file_i, 'rb') as f:
-        enc_data = f.read()
-    dec_data = decrypt_data(enc_data, key, type_o)
-    if file_o:
-        if type_o == 'str':
-            with open(file_o, 'w', encoding='utf-8') as f:
-                f.write(dec_data)
-        else:
-            with open(file_o, 'wb') as f:
-                f.write(dec_data)
-    return dec_data
+        *,
+        from_file: str = None,
+        from_file_mode: T.FileMode = 'rb',
+        to_file: str = None,
+        to_file_mode: T.FileMode = 'wb',
+) -> T.OutData:
+    assert key
+    if not data:
+        assert from_file and from_file_mode
+        data = load_file(from_file, from_file_mode)
+    # noinspection PyTypeChecker
+    out = decrypt_data(data, key, 'bin' if to_file_mode[-1] == 'b' else 'str')
+    if to_file:
+        dump_file(out, to_file, to_file_mode)
+    return out
 
 
 def decrypt_data(
         enc_data: bytes,
         key: str,
-        type_o: T.DecryptedDataType = 'str',
+        type_o: T.OutDataType = 'str',
         size: int = 16,
         fmt: T.FormatterName = 'base64',
-) -> T.DecryptedData:
+) -> T.OutData:
     _enc_data = formatters[fmt].decode(enc_data)  # type: bytes
     _key = sha256(key.encode('utf-8')).digest()  # type: bytes
     
