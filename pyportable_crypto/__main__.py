@@ -1,11 +1,6 @@
-try:
-    from argsense import cli  # noqa
-except ImportError:
-    print(':v4', 'command line tool not found!\n'
-                 'please install it with: `pip install argsense`')
-    exit(-1)
-
 import os
+
+from argsense import cli
 
 from . import __version__
 from .compiler import PyCompiler
@@ -47,5 +42,14 @@ def compile_dir(dir_i: str, dir_o: str, key: str):
     compiler.compile_dir(dir_i, dir_o)
 
 
+# -----------------------------------------------------------------------------
+
+@cli.cmd()
+def deploy_compiled_binary(key: str, dir_o: str) -> None:
+    from .cipher_gen import generate_custom_cipher_package
+    generate_custom_cipher_package(key, dir_o)
+
+
 if __name__ == '__main__':
+    # py -m pyportable_crypto -h
     cli.run()

@@ -1,24 +1,24 @@
 [tool.poetry]
 name = "pyportable-crypto"
-version = "1.1.0"
+version = "1.1.1a0"
 homepage = "https://github.com/likianta/pyportable-crypto"
 description = "Crypto plugin for pyportable-installer project."
 authors = ["Likianta <likianta@foxmail.com>"]
 license = "MIT"
 
+[tool.poetry.dependencies]
+python = "^3.8"
+argsense = "^0.5.2"
+lk-logger = "^5.6.2"
+lk-utils = "^2.5.6"
+
+[tool.poetry.group.dev.dependencies]
+cython = "*"
+
 [[tool.poetry.source]]
 name = "tsinghua"
 url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple/"
-default = true
-
-[tool.poetry.dependencies]
-python = "^3.8"
-lk-logger = "^5.6.1"
-lk-utils = "^2.5.6"
-argsense = { version = "^0.5.2", optional = true }
-
-[tool.poetry.extras]
-cli = ["argsense"]
+priority = "default"
 
 [build-system]
 requires = ["poetry"]

@@ -15,6 +15,7 @@ import shutil
 import sys
 from platform import system
 from secrets import token_hex
+from textwrap import dedent
 from time import time
 
 from lk_utils import dumps
@@ -26,7 +27,7 @@ system = system().lower()
 
 
 def generate_custom_cipher_package(
-        key: str, dist_dir: str, python_executable_path=sys.executable, **kwargs
+    key: str, dist_dir: str, python_executable_path=sys.executable, **kwargs
 ):
     """
     Args:
@@ -49,7 +50,7 @@ def generate_custom_cipher_package(
         **kwargs:
             temp_dir: str.
                 where to put the intermediate files.
-                if not specified, we will use '<current_dir>/temp/<random_id>'.
+                if not specified, we will use './cache/<random_id>'.
                 if specified but not exists, we will create it.
     """
     assert key, 'key cannot be empty'
@@ -77,7 +78,7 @@ def generate_custom_cipher_package(
     code = code.replace('__KEY__', key)
     dumps(code, file_m)
     
-    print('compiling... (this may take several minutes)')
+    print('compiling... (this may take several minutes)', ':v3s')
     start = time()
     run_cmd_args(
         python_executable_path,
@@ -91,11 +92,8 @@ def generate_custom_cipher_package(
     shutil.move(file_m, file_o)
     
     # make it to be package (create '__init__.py')
-    from textwrap import dedent
     from pyportable_crypto import __version__ as crypto_version
-    pyversion = run_cmd_args(python_executable_path, '--version')
-    pyversion = tuple(map(int, pyversion.split(' ')[1].split('.')[:2]))
-    #   e.g. 'Python 3.8.10' -> (3, 8)
+    pyversion = sys.version_info[:2]  # e.g. (3, 8)
     dumps(dedent('''\
         encrypt = None
         decrypt = None
@@ -135,8 +133,8 @@ def generate_custom_cipher_package(
         _ = [shutil.rmtree(d)
              for d in find_dir_paths(os.path.dirname(dir_m))
              if d != dir_m]
-
-    print('see result: {}'.format(dir_o))
+    
+    print('done. see result: {}'.format(dir_o), ':t')
     return dir_o
 
 
