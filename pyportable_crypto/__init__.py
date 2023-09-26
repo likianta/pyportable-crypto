@@ -19,4 +19,4 @@ from .decrypt import decrypt_data
 from .encrypt import encrypt_data
 from .encrypt import encrypt
 
-__version__ = '1.1.1'
+__version__ = '1.2.0'

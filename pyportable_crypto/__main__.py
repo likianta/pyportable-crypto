@@ -34,22 +34,31 @@ def compile_file(file_i: str, file_o: str, key: str):
 
 
 @cli.cmd()
-def compile_dir(dir_i: str, dir_o: str, key: str):
+def compile_dir(
+    dir_i: str, dir_o: str, key: str, reuse_exists: bool = False
+) -> None:
     """
     iterate all ".py" files in `dir_i` and compile them to `dir_o`.
     """
-    compiler = PyCompiler(key, dir_o)
+    compiler = PyCompiler(
+        key,
+        dir_o,
+        reuse_runtmie=reuse_exists,
+        overwrite_runtime=True,
+    )
     compiler.compile_dir(dir_i, dir_o)
 
 
 # -----------------------------------------------------------------------------
 
+
 @cli.cmd()
-def deploy_compiled_binary(key: str, dir_o: str) -> None:
-    from .cipher_gen import generate_custom_cipher_package
-    generate_custom_cipher_package(key, dir_o)
+def deploy_compiled_binary(dir_o: str, key: str) -> None:
+    from .cipher_gen import generate_cipher_package
+    generate_cipher_package(dir_o, key)
 
 
 if __name__ == '__main__':
     # py -m pyportable_crypto -h
+    # py -m pyportable_crypto compile-dir -h
     cli.run()

@@ -10,15 +10,14 @@ requirements:
     if you are using linux or macos:
         make sure you have gcc installed.
 """
-import os.path
-import shutil
+import re
 import sys
 from platform import system
 from secrets import token_hex
 from textwrap import dedent
-from time import time
 
 from lk_utils import dumps
+from lk_utils import fs
 from lk_utils import loads
 from lk_utils import run_cmd_args
 from lk_utils import xpath
@@ -26,48 +25,37 @@ from lk_utils import xpath
 system = system().lower()
 
 
-def generate_custom_cipher_package(
-    key: str, dist_dir: str, python_executable_path=sys.executable, **kwargs
-):
+def generate_cipher_package(
+    dir_o: str, key: str, python_executable_path: str = sys.executable, **kwargs
+) -> str:
     """
-    Args:
-        key: str.
-            the key cannot be empty.
-            if you want a random key, suggest using `uuid`, `secrets.token_hex`,
-            `secrets.token_urlsafe`, etc.
-        dist_dir: str.
-            we will generate a "pyportable_runtime" package in this directory.
-            if `dist_dir` doesn't exist, we will create it.
-            if `pyportable_runtime` already exists in it, we will raise an
-            exception immediately.
-            it is suggested to use a directory name which contains the python
-            version info. for example '~/my_custom_runtime_py3.8'.
-        python_executable_path: str.
-            the path to regular python interpreter which is installed in your
-            computer.
-            the site-packages is not needed. we will use our own in this folder
-            (see '<current_dir>/site-packages').
-        **kwargs:
+    params:
+        key: the secret key.
+            - can be any string with any length.
+            - cannot be empty.
+        dir_o:
+            the dirname must be a valid python package name, for example \
+            "pyportable_runtime".
+            for safety consideration, if the dir_o exists, will stop and raise \
+            FileExistsError.
+        kwargs:
             temp_dir: str.
                 where to put the intermediate files.
                 if not specified, we will use './cache/<random_id>'.
                 if specified but not exists, we will create it.
     """
-    assert key, 'key cannot be empty'
-    print(':v2', key)
+    assert not fs.exists(dir_o), dir_o
+    assert key, 'key cannot be empty!'
+    assert re.compile(r'[a-zA-Z_]\w*'), \
+        'the dirname should be a valid python package name format!'
     
-    if not os.path.exists(dist_dir):
-        os.mkdir(dist_dir)
-    else:
-        assert not os.path.exists(dist_dir + '/pyportable_runtime'), (
-            f'make sure no "pyportable_runtime" package exists in "{dist_dir}"'
-        )
+    package_name = fs.dirname(dir_o)
+    print(':v2', package_name, key)
     
     dir_i = xpath('.')
     dir_m = kwargs.get('temp_dir', xpath(f'cache/{token_hex()}'))
-    dir_o = dist_dir + '/pyportable_runtime'
-    if not os.path.exists(dir_m): os.mkdir(dir_m)
-    os.mkdir(dir_o)
+    fs.make_dir(dir_m)
+    fs.make_dir(dir_o)
     
     file_i = dir_i + '/cipher_standalone.py'
     file_m = dir_m + '/cipher.py'
@@ -78,18 +66,18 @@ def generate_custom_cipher_package(
     code = code.replace('__KEY__', key)
     dumps(code, file_m)
     
-    print('compiling... (this may take several minutes)', ':v3s')
-    start = time()
+    print('compiling... (this may take several minutes)', ':v3st2')
     run_cmd_args(
         python_executable_path,
         xpath('cythonize.py'),
-        os.path.abspath(file_m), 'build_ext', '--inplace'
+        fs.abspath(file_m),
+        'build_ext',
+        '--inplace'
     )
-    print('compilation consumed {:.2f}s'.format(time() - start))
+    print('compilation done', ':t2')
     
-    file_m = dir_m + '/' + \
-             [x for x in os.listdir(dir_m) if x.endswith(('.pyd', '.so'))][0]
-    shutil.move(file_m, file_o)
+    file_m = fs.find_file_paths(dir_m, ('.pyd', '.so'))[0]
+    fs.move(file_m, file_o)
     
     # make it to be package (create '__init__.py')
     from pyportable_crypto import __version__ as crypto_version
@@ -125,19 +113,12 @@ def generate_custom_cipher_package(
     ''').strip().format(pyversion, crypto_version), dir_o + '/__init__.py')
     
     # clean up intermediate folder
-    try:
-        shutil.rmtree(dir_m)
-    except:  # usually failed due to permission error...
-        # but we can delete others in this folder.
-        from lk_utils import find_dir_paths
-        _ = [shutil.rmtree(d)
-             for d in find_dir_paths(os.path.dirname(dir_m))
-             if d != dir_m]
+    fs.remove_tree(dir_m)
     
-    print('done. see result: {}'.format(dir_o), ':t')
-    return dir_o
+    print('done. see result at "{}"'.format(dir_o), ':t')
+    return package_name
 
 
 if __name__ == '__main__':
     from secrets import token_urlsafe
-    generate_custom_cipher_package(token_urlsafe(), '../../tests/folder0')
+    generate_cipher_package('../../tests/folder0', token_urlsafe())
