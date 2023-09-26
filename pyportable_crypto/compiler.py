@@ -57,7 +57,9 @@ class PyCompiler:
             code = self._template.format(ciphertext=data)
             dumps(code, file_o)
     
-    def compile_dir(self, dir_i: str, dir_o: str) -> None:
+    def compile_dir(
+        self, dir_i: str, dir_o: str, include_other_files: bool = True
+    ) -> None:
         """
         output structure:
             <the_parent_of_dir_o>
@@ -71,15 +73,19 @@ class PyCompiler:
         fs.clone_tree(dir_i, dir_o)
         # for d in fs.findall_dirs(dir_i):
         #     fs.make_dir(f'{dir_o}/{d.relpath}')
-        for f in fs.findall_files(dir_i, '.py'):
+        for f in fs.findall_files(dir_i):
             file_i = f.path
             file_o = f'{dir_o}/{f.relpath}'
-            if f.name == '__init__.py':
-                print(':rpi', '[green]{}[/]'.format(f.relpath))
+            if f.ext == 'py':
+                if f.name == '__init__.py':
+                    print(':rpi', '[green]{}[/]'.format(f.relpath))
+                    fs.copy_file(file_i, file_o, True)
+                else:
+                    print(':rpi', '[magenta]{}[/]'.format(f.relpath))
+                    data = self._encrypt(loads(file_i), add_shell=True)
+                    code = self._template.format(ciphertext=data)
+                    dumps(code, file_o)
+            elif include_other_files:
+                print(':rpi', '[bright_black]{}[/]'.format(f.relpath))
                 fs.copy_file(file_i, file_o, True)
-            else:
-                print(':rpi', '[magenta]{}[/]'.format(f.relpath))
-                data = self._encrypt(loads(file_i), add_shell=True)
-                code = self._template.format(ciphertext=data)
-                dumps(code, file_o)
         print(':i0s')
