@@ -13,7 +13,7 @@ class PyCompiler:
         self._generate_cipher_runtime(
             runtime_dir := '{}/pyportable_runtime'.format(fs.parent(dir_o)),
             key,
-            _reuse=kwargs.get('reuse_runtmie', False),
+            _reuse=kwargs.get('reuse_runtime', False),
             _overwrite=kwargs.get('overwrite_runtime', False),
         )
         

@@ -1,7 +1,7 @@
 """
 references:
-    https://stackoverflow.com/questions/12524994/encrypt-decrypt-using-pycrypto
-        -aes-256
+    https://stackoverflow.com/questions/12524994/encrypt-decrypt-using \
+    -pycrypto-aes-256
     https://blog.csdn.net/Flower941220/article/details/101166912
     
 warnings:

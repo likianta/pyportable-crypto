@@ -13,7 +13,7 @@ requirements:
 import re
 import sys
 from platform import system
-from secrets import token_hex
+from random import randint
 from textwrap import dedent
 
 from lk_utils import dumps
@@ -26,7 +26,7 @@ system = system().lower()
 
 
 def generate_cipher_package(
-    dir_o: str, key: str, python_executable_path: str = sys.executable, **kwargs
+    dir_o: str, key: str, python_executable_path: str = sys.executable
 ) -> str:
     """
     params:
@@ -38,11 +38,6 @@ def generate_cipher_package(
             "pyportable_runtime".
             for safety consideration, if the dir_o exists, will stop and raise \
             FileExistsError.
-        kwargs:
-            temp_dir: str.
-                where to put the intermediate files.
-                if not specified, we will use './cache/<random_id>'.
-                if specified but not exists, we will create it.
     """
     assert not fs.exists(dir_o), dir_o
     assert key, 'key cannot be empty!'
@@ -52,8 +47,11 @@ def generate_cipher_package(
     package_name = fs.dirname(dir_o)
     print(':v2', package_name, key)
     
-    dir_i = xpath('.')
-    dir_m = kwargs.get('temp_dir', xpath(f'cache/{token_hex()}'))
+    dir_i = xpath('.')  # current dir
+    # dir_m = kwargs.get('temp_dir', xpath(f'cache/{token_hex()}'))
+    dir_m = xpath('cache/{}'.format(
+        ''.join(map(str, (randint(0, 9) for _ in range(8))))
+    ))
     fs.make_dir(dir_m)
     fs.make_dir(dir_o)
     
@@ -69,10 +67,13 @@ def generate_cipher_package(
     print('compiling... (this may take several minutes)', ':v3st2')
     run_cmd_args(
         python_executable_path,
-        xpath('cythonize.py'),
-        fs.abspath(file_m),
+        # note we don't use abspath because the path in poetry virtual env \
+        # may be very long, which will cause windows msvc linking crashed.
+        'cythonize.py',  # file in current dir.
+        fs.relpath(file_m, dir_i),
         'build_ext',
-        '--inplace'
+        '--inplace',
+        cwd=dir_i,
     )
     print('compilation done', ':t2')
     

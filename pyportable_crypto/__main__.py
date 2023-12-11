@@ -35,7 +35,7 @@ def compile_file(file_i: str, file_o: str, key: str):
 
 @cli.cmd()
 def compile_dir(
-    dir_i: str, dir_o: str, key: str, reuse_exists: bool = False
+    dir_i: str, dir_o: str, key: str, reuse_runtime: bool = False
 ) -> None:
     """
     iterate all ".py" files in `dir_i` and compile them to `dir_o`.
@@ -43,7 +43,7 @@ def compile_dir(
     compiler = PyCompiler(
         key,
         dir_o,
-        reuse_runtmie=reuse_exists,
+        reuse_runtime=reuse_runtime,
         overwrite_runtime=True,
     )
     compiler.compile_dir(dir_i, dir_o)
