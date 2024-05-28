@@ -1,33 +1,46 @@
+import importlib.util
+from os.path import basename
+from os.path import exists
+from textwrap import dedent
+from types import ModuleType
+
 from lk_utils import dumps
 from lk_utils import fs
 from lk_utils import loads
 
-from .cipher_gen import cipher_standalone as core
+from ..cipher_gen import cipher_standalone as core
+from ..cipher_gen import generate_cipher_package
 
 
 class PyCompiler:
     _decrypt: core.decrypt
     _encrypt: core.encrypt
+    _root: str
     
-    def __init__(self, key: str, dir_o: str, **kwargs):
+    def __init__(self, key: str, dir_o: str, **kwargs) -> None:
+        self._root = fs.abspath(dir_o)
         self._generate_cipher_runtime(
-            runtime_dir := '{}/pyportable_runtime'.format(fs.parent(dir_o)),
+            runtime_dir := '{}/pyportable_runtime'.format(self._root),
             key,
             _reuse=kwargs.get('reuse_runtime', False),
             _overwrite=kwargs.get('overwrite_runtime', False),
         )
         
-        import sys
-        sys.path.insert(0, fs.parent(runtime_dir))
+        pyportable_runtime = load_package(runtime_dir)
+        self._encrypt = pyportable_runtime.encrypt
+        self._decrypt = pyportable_runtime.decrypt
         
-        from pyportable_runtime import encrypt, decrypt  # noqa
-        self._encrypt = encrypt
-        self._decrypt = decrypt
-        
-        from textwrap import dedent
         self._template = dedent('''
-            from pyportable_runtime import decrypt
-            globals().update(decrypt({ciphertext}, globals(), locals()))
+            try:
+                from pyportable_runtime import decrypt
+            except ImportError:
+                import os
+                import sys
+                search_path = os.path.abspath(f'{{__file__}}/../{relpath}')
+                sys.path.insert(0, search_path)
+                from pyportable_runtime import decrypt
+            finally:
+                globals().update(decrypt({cipher_text}))
         ''').strip()
     
     @staticmethod
@@ -44,7 +57,6 @@ class PyCompiler:
                 fs.remove_tree(dir_o)
             else:
                 raise FileExistsError(dir_o)
-        from .cipher_gen import generate_cipher_package
         generate_cipher_package(dir_o, key)
     
     def compile_file(self, file_i: str, file_o: str) -> None:
@@ -53,8 +65,13 @@ class PyCompiler:
             fs.copy_file(file_i, file_o, True)
         else:
             print(':rp', '[magenta]{}[/]'.format(file_o))
-            data = self._encrypt(loads(file_i), add_shell=True)
-            code = self._template.format(ciphertext=data)
+            encrypted_text = self._encrypt(loads(file_i), add_shell=True)
+            relpath = fs.relpath(self._root, fs.parent(file_i))
+            if relpath == '.': relpath = ''
+            code = self._template.format(
+                cipher_text=encrypted_text,
+                relpath=relpath,
+            )
             dumps(code, file_o)
     
     def compile_dir(
@@ -82,10 +99,29 @@ class PyCompiler:
                     fs.copy_file(file_i, file_o, True)
                 else:
                     print(':rpi', '[magenta]{}[/]'.format(f.relpath))
-                    data = self._encrypt(loads(file_i), add_shell=True)
-                    code = self._template.format(ciphertext=data)
+                    encrypted_text = self._encrypt(loads(file_i), add_shell=True)
+                    relpath = fs.relpath(self._root, f.dir)
+                    if relpath == '.': relpath = ''
+                    code = self._template.format(
+                        cipher_text=encrypted_text,
+                        relpath=relpath,
+                    )
                     dumps(code, file_o)
             elif include_other_files:
                 print(':rpi', '[bright_black]{}[/]'.format(f.relpath))
                 fs.copy_file(file_i, file_o, True)
         print(':i0s')
+
+
+def load_package(pkg_dir: str, name: str = None) -> ModuleType:
+    """
+    ref: https://stackoverflow.com/a/50395128
+    """
+    init_file = f'{pkg_dir}/__init__.py'
+    assert exists(init_file)
+    if not name: name = basename(pkg_dir)
+    spec = importlib.util.spec_from_file_location(name, init_file)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    # sys.modules[name] = module
+    return module
