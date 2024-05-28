@@ -1,12 +1,11 @@
 import importlib.util
+import sys
 from os.path import basename
 from os.path import exists
-from textwrap import dedent
 from types import ModuleType
 
-from lk_utils import dumps
 from lk_utils import fs
-from lk_utils import loads
+from lk_utils.textwrap import dedent
 
 from ..cipher_gen import cipher_standalone as core
 from ..cipher_gen import generate_cipher_package
@@ -15,49 +14,60 @@ from ..cipher_gen import generate_cipher_package
 class PyCompiler:
     _decrypt: core.decrypt
     _encrypt: core.encrypt
-    _root: str
     
-    def __init__(self, key: str, dir_o: str, **kwargs) -> None:
-        self._root = fs.abspath(dir_o)
-        self._generate_cipher_runtime(
-            runtime_dir := '{}/pyportable_runtime'.format(self._root),
-            key,
-            _reuse=kwargs.get('reuse_runtime', False),
-            _overwrite=kwargs.get('overwrite_runtime', False),
-        )
-        
-        pyportable_runtime = load_package(runtime_dir)
-        self._encrypt = pyportable_runtime.encrypt
-        self._decrypt = pyportable_runtime.decrypt
+    def __init__(self, key: str, _runtime: ModuleType = None) -> None:
+        if _runtime:
+            self._encrypt = _runtime.encrypt
+            self._decrypt = _runtime.decrypt
+        else:
+            assert key, '`key` is required to generate the runtime package.'
+            pkg_dir = generate_cipher_package(key)
+            sys.path.insert(0, fs.parent(pkg_dir))
+            import pyportable_runtime  # noqa
+            self._encrypt = pyportable_runtime.encrypt
+            self._decrypt = pyportable_runtime.decrypt
         
         self._template = dedent('''
             try:
                 from pyportable_runtime import decrypt
+                
             except ImportError:
-                import os
-                import sys
-                search_path = os.path.abspath(f'{{__file__}}/../{relpath}')
-                sys.path.insert(0, search_path)
+                
+                def _search_runtime_location() -> None:
+                    import os
+                    import sys
+                    from os.path import abspath, exists
+                    from typing import Optional
+                    
+                    if x := os.getenv('PYPORTABLE_RUNTIME'):
+                        print('pyportable_runtime', x)
+                        sys.path.insert(0, x)
+                        return
+                    
+                    # search upwards
+                    dir_ = abspath(f'{{__file__}}/..').replace('\\\\', '/')
+                    while True:
+                        if exists(f'{{dir_}}/pyportable_runtime'):
+                            print('pyportable_runtime', dir_)
+                            sys.path.insert(0, dir_)
+                            break
+                        if '/' not in dir_.strip('/'):
+                            raise ModuleNotFoundError('pyportable_runtime')
+                        else:
+                            dir_ = dir_.rsplit('/', 1)[0]
+                
+                _search_runtime_location()
                 from pyportable_runtime import decrypt
+                
             finally:
                 globals().update(decrypt({cipher_text}))
         ''').strip()
     
-    @staticmethod
-    def _generate_cipher_runtime(
-        dir_o: str,
-        key: str,
-        _reuse: bool = False,
-        _overwrite: bool = False
-    ) -> None:
-        if fs.exists(dir_o):
-            if _reuse:
-                return
-            elif _overwrite:
-                fs.remove_tree(dir_o)
-            else:
-                raise FileExistsError(dir_o)
-        generate_cipher_package(dir_o, key)
+    @classmethod
+    def init_from_runtime(cls, runtime: ModuleType) -> 'PyCompiler':
+        return cls('', _runtime=runtime)
+    
+    # -------------------------------------------------------------------------
     
     def compile_file(self, file_i: str, file_o: str) -> None:
         if fs.filename(file_i) == '__init__.py':
@@ -65,14 +75,9 @@ class PyCompiler:
             fs.copy_file(file_i, file_o, True)
         else:
             print(':rp', '[magenta]{}[/]'.format(file_o))
-            encrypted_text = self._encrypt(loads(file_i), add_shell=True)
-            relpath = fs.relpath(self._root, fs.parent(file_i))
-            if relpath == '.': relpath = ''
-            code = self._template.format(
-                cipher_text=encrypted_text,
-                relpath=relpath,
-            )
-            dumps(code, file_o)
+            text = self._encrypt(fs.load(file_i), add_shell=True)
+            code = self._template.format(cipher_text=text)
+            fs.dump(code, file_o)
     
     def compile_dir(
         self, dir_i: str, dir_o: str, include_other_files: bool = True
@@ -80,12 +85,12 @@ class PyCompiler:
         """
         output structure:
             <the_parent_of_dir_o>
-            |= pyportable_runtime
-                |- __init__.py
-                |- cipher.so  # or "cipher.pyd"
-            |= <dir_o>
-                |- __init__.py
-                |- ...
+                |= pyportable_runtime
+                    |- __init__.py
+                    |- cipher.so  # or "cipher.pyd"
+                |= <dir_o>
+                    |- __init__.py
+                    |- ...
         """
         fs.clone_tree(dir_i, dir_o)
         # for d in fs.findall_dirs(dir_i):
@@ -99,20 +104,16 @@ class PyCompiler:
                     fs.copy_file(file_i, file_o, True)
                 else:
                     print(':rpi', '[magenta]{}[/]'.format(f.relpath))
-                    encrypted_text = self._encrypt(loads(file_i), add_shell=True)
-                    relpath = fs.relpath(self._root, f.dir)
-                    if relpath == '.': relpath = ''
-                    code = self._template.format(
-                        cipher_text=encrypted_text,
-                        relpath=relpath,
-                    )
-                    dumps(code, file_o)
+                    text = self._encrypt(fs.load(file_i), add_shell=True)
+                    code = self._template.format(cipher_text=text)
+                    fs.dump(code, file_o)
             elif include_other_files:
                 print(':rpi', '[bright_black]{}[/]'.format(f.relpath))
                 fs.copy_file(file_i, file_o, True)
         print(':i0s')
 
 
+# DELETE: no usage.
 def load_package(pkg_dir: str, name: str = None) -> ModuleType:
     """
     ref: https://stackoverflow.com/a/50395128
