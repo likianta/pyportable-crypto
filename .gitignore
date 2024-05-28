@@ -1,6 +1,6 @@
 /.idea/
 /dist/
-/pyportable_crypto/cipher_gen/cache/*
+/pyportable_crypto/cipher_gen/_cache/*
 /tests/
 __pycache__/
 
@@ -8,4 +8,4 @@ __pycache__/
 *.dec.txt
 *.enc.txt
 
-!/pyportable_crypto/cipher_gen/cache/.gitkeep
+!/pyportable_crypto/cipher_gen/_cache/.gitkeep
