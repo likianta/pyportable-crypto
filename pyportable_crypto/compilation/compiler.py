@@ -1,7 +1,5 @@
 import importlib.util
-import sys
-from os.path import basename
-from os.path import exists
+import sys  # noqa
 from types import ModuleType
 
 from lk_utils import fs
@@ -12,18 +10,21 @@ from ..cipher_gen import generate_cipher_package
 
 
 class PyCompiler:
+    runtime_pkgdir: str
     _decrypt: core.decrypt
     _encrypt: core.encrypt
     
     def __init__(self, key: str, _runtime: ModuleType = None) -> None:
         if _runtime:
+            self.runtime_pkgdir = fs.parent(_runtime.__file__)
             self._encrypt = _runtime.encrypt
             self._decrypt = _runtime.decrypt
         else:
             assert key, '`key` is required to generate the runtime package.'
-            pkg_dir = generate_cipher_package(key)
-            sys.path.insert(0, fs.parent(pkg_dir))
-            import pyportable_runtime  # noqa
+            self.runtime_pkgdir = generate_cipher_package(key)
+            # sys.path.insert(0, fs.parent(self.runtime_pkgdir))
+            # import pyportable_runtime  # noqa
+            pyportable_runtime = load_package(self.runtime_pkgdir)
             self._encrypt = pyportable_runtime.encrypt
             self._decrypt = pyportable_runtime.decrypt
         
@@ -113,14 +114,13 @@ class PyCompiler:
         print(':i0s')
 
 
-# DELETE: no usage.
 def load_package(pkg_dir: str, name: str = None) -> ModuleType:
     """
     ref: https://stackoverflow.com/a/50395128
     """
     init_file = f'{pkg_dir}/__init__.py'
-    assert exists(init_file)
-    if not name: name = basename(pkg_dir)
+    assert fs.exists(init_file)
+    if not name: name = fs.basename(pkg_dir)
     spec = importlib.util.spec_from_file_location(name, init_file)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

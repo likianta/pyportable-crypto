@@ -326,4 +326,4 @@ reference = "tsinghua"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "c31a1ccf68a0e6a1704778b550f2e244f84bd877f30ef824cf4252a3d8efaabd"
+content-hash = "cb0008a7c153c248509ce84b4ed7fd9ec216dfcfdb7d32c1462cfbea92930fa8"
