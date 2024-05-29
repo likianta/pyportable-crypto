@@ -22,16 +22,15 @@ class PyCompiler:
         else:
             assert key, '`key` is required to generate the runtime package.'
             self.runtime_pkgdir = generate_cipher_package(key)
-            # sys.path.insert(0, fs.parent(self.runtime_pkgdir))
-            # import pyportable_runtime  # noqa
-            pyportable_runtime = load_package(self.runtime_pkgdir)
+            sys.path.insert(0, fs.parent(self.runtime_pkgdir))
+            import pyportable_runtime  # noqa
+            # pyportable_runtime = load_package(self.runtime_pkgdir)
             self._encrypt = pyportable_runtime.encrypt
             self._decrypt = pyportable_runtime.decrypt
         
         self._template = dedent('''
             try:
                 from pyportable_runtime import decrypt
-                
             except ImportError:
                 
                 def _search_runtime_location() -> None:
@@ -60,9 +59,8 @@ class PyCompiler:
                 _search_runtime_location()
                 from pyportable_runtime import decrypt
                 
-            finally:
-                globals().update(decrypt({cipher_text}))
-        ''').strip()
+            globals().update(decrypt({cipher_text}, globals(), locals()))
+        ''')
     
     @classmethod
     def init_from_runtime(cls, runtime: ModuleType) -> 'PyCompiler':
