@@ -20,12 +20,16 @@ def generate_cipher_package(
             - can be any string with any length.
             - cannot be empty.
     """
+    from .. import __version__ as crypto_version
+    
     assert key, 'key cannot be empty!'
     # assert re.compile(r'[a-zA-Z_]\w*'), \
     #     'the dirname should be a valid python package name format!'
     
     dir_i = xpath('.')  # current dir
-    dir_m = xpath('_cache/{}'.format(md5(key.encode('utf-8')).hexdigest()))
+    dir_m = xpath('_cache/{}'.format(
+        md5('{}@{}'.format(key, crypto_version).encode('utf-8')).hexdigest()
+    ))
     dir_o = '{}/pyportable_runtime'.format(dir_m)
     if fs.exists(dir_o):
         return dir_o
@@ -57,7 +61,6 @@ def generate_cipher_package(
     print('compilation done', ':t2')
     fs.move(fs.find_file_paths(dir_m, ('.pyd', '.so'))[0], file_o)
     
-    from pyportable_crypto import __version__ as crypto_version
     pyversion = sys.version_info[:2]  # e.g. (3, 8)
     dumps(dedent('''
         encrypt = None
