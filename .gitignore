@@ -1,7 +1,6 @@
 /.idea/
 /dist/
-/pyportable_crypto/cipher_gen/_cache/*
-/tests/
+/pyportable_crypto/cipher_gen/_cache/*/
 __pycache__/
 
 .DS_Store
