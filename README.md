@@ -1,5 +1,67 @@
 # PyPortable Crypto
 
+An experimental encryption tool for encrypting Python code.
+
+Warning: This project is under proof-in-concept stage, no guarantee for 
+production use.
+
+## Installation
+
+```sh
+pip install pyportable-crypto
+```
+
+## How To Use
+
+### Get help
+
+```sh
+# list all commands
+python -m pyportable_crypto -h
+
+# get help of specific command
+python -m pyportable_crypto <command> -h
+```
+
+### Encrypt module
+
+```sh
+python -m pyportable_crypto compile-file hello_world.py 
+```
+
+This generates:
+
+```
+|- hello_world.py
+|- encrypted
+    |- hello_world.py
+    |- pyportable_runtime.pyd
+```
+
+### Encrypt package
+
+```sh
+python -m pyportable_crypto compile-dir hello_world
+#   make sure there is a '__init__.py' in this directory. 
+```
+
+This generates:
+
+```
+|- hello_world
+    |- __init__.py
+    |- some_module.py
+    |- ...
+|- encrypted
+    |- hello_world
+        |- __init__.py
+        |- some_module.py
+        |- ...
+        |- pyportable_runtime.pyd
+```
+
+---
+
 [中文版点此阅读](./README.zh.md)
 
 `pyportable-crypto` is an open source python project made for easily...
@@ -111,4 +173,3 @@ globals(decrypt(b'ZKIP01h5mH/6sESFUrAGwQ==...', globals(), locals()))
 The function `decrypt` converts encrypted text to python object (a dict type), users can access this object but cannot get the real source code from it.
 
 PS: Don't forget to package `~/my_project/lib/pyportable_runtime` to distribution and add it to `sys.path` before importing other modules.
-

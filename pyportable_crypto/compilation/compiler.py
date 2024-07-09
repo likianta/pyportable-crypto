@@ -94,7 +94,7 @@ class PyCompiler:
         fs.clone_tree(dir_i, dir_o, True)
         # for d in fs.findall_dirs(dir_i):
         #     fs.make_dir(f'{dir_o}/{d.relpath}')
-        for f in fs.findall_files(dir_i):
+        for f in fs.findall_files(dir_i, filter=True):
             file_i = f.path
             file_o = f'{dir_o}/{f.relpath}'
             if f.ext == 'py':
