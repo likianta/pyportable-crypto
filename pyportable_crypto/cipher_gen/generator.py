@@ -2,7 +2,8 @@ import sys
 from hashlib import md5
 from platform import system
 
-from lk_utils import dumps
+import lk_logger
+from lk_utils import dump
 from lk_utils import fs
 from lk_utils import run_cmd_args
 from lk_utils import xpath
@@ -47,26 +48,27 @@ def generate_cipher_package(
     code = code.replace('__KEY__', key)
     fs.dump(code, file_m)
     
-    print('compiling... (this may take several minutes)', ':v3st2')
-    try:
-        run_cmd_args(
-            python_executable_path,
-            # note we don't use abspath because the path in poetry virtual env -
-            # may be very long, which will cause windows msvc linking crashed.
-            'cythonize.py',  # file in current dir.
-            fs.relpath(file_m, dir_i),
-            'build_ext',
-            '--inplace',
-            cwd=dir_i,
-        )
-    except Exception:
-        fs.remove_tree(dir_o)
-        raise
-    print('compilation done', ':t2')
+    with lk_logger.spinner('compiling... (this may take several minutes)'):
+        with lk_logger.timing(True):
+            try:
+                run_cmd_args(
+                    python_executable_path,
+                    # note we don't use abspath because the path in poetry -
+                    # virtual env may be very long, which will cause windows -
+                    # msvc linking crashed.
+                    'cythonize.py',  # file in current dir.
+                    fs.relpath(file_m, dir_i),
+                    'build_ext',
+                    '--inplace',
+                    cwd=dir_i,
+                )
+            except Exception:
+                fs.remove_tree(dir_o)
+                raise
     fs.move(fs.find_file_paths(dir_m, ('.pyd', '.so'))[0], file_o)
     
     pyversion = sys.version_info[:2]  # e.g. (3, 8)
-    dumps(dedent('''
+    dump(dedent('''
         encrypt = None
         decrypt = None
 
