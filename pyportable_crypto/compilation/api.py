@@ -21,15 +21,26 @@ def compile_file(
 
 
 def compile_dir(
-    dir_i: str, dir_o: str, key: str, add_runtime_package: bool = True
+    dir_i: str, dir_o: str, key: str, add_runtime_package: str = 'inside'
 ) -> None:
     """
     iterate all ".py" files in `dir_i` and compile them to `dir_o`.
+    
+    kwargs:
+        add_runtime_package (-r):
+            'inside': copy the runtime package to `dir_o`.
+            'outside': copy the runtime package to `dir_o`'s parent directory.
+            'none': do not copy the runtime package.
     """
     compiler = PyCompiler(key)
     compiler.compile_dir(dir_i, dir_o)
-    if add_runtime_package:
+    if add_runtime_package == 'inside':
         fs.copy_tree(
             compiler.runtime_pkgdir,
             f'{dir_o}/pyportable_runtime'
+        )
+    elif add_runtime_package == 'outside':
+        fs.copy_tree(
+            compiler.runtime_pkgdir,
+            f'{fs.parent(dir_o)}/pyportable_runtime'
         )
