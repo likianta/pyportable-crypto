@@ -15,10 +15,10 @@ from . import cipher_gen
 from .compilation import PyCompiler
 from .compilation import compile_dir
 from .compilation import compile_file
-from .encryption import decrypt
 from .encryption import decrypt_data
-from .encryption import encrypt
+from .encryption import decrypt_file
 from .encryption import encrypt_data
+from .encryption import encrypt_file
 from .encryption import keygen
 
-__version__ = '1.3.1'
+__version__ = '1.4.0'

@@ -1,63 +1,44 @@
 import typing as t
 from hashlib import sha256
 
-from ._io import dump_file
-from ._io import load_file
 from ._pyaes_snippet import AESModeOfOperationCBC
-from .formatter import T as T0
 from .formatter import formatters
 
 
-class T(T0):
-    FileMode = t.Literal['r', 'rb']
-    InData = t.Union[str, bytes]
-    OutData = bytes
-
-
-def encrypt(
-        data: T.InData = None,
-        key: str = None,
-        *,
-        from_file: str = None,
-        from_file_mode: T.FileMode = 'rb',
-        to_file: str = None,
-        to_file_mode: T.FileMode = 'wb',
-        size: int = 16,
-        fmt: T.FormatterName = 'base64',
-) -> T.OutData:
-    assert key
-    if not data:
-        assert from_file
-        data = load_file(from_file, from_file_mode)
-    out = encrypt_data(data, key, size, fmt)
-    if to_file:
-        assert to_file_mode == 'wb'
-        dump_file(out, to_file, 'wb')
-    return out
+def encrypt_file(
+    file_i: str, file_o: str = None, *, key: str
+) -> t.Optional[bytes]:
+    with open(file_i, 'rb') as f:
+        enc = encrypt_data(f.read(), key)
+    if file_o:
+        with open(file_o, 'wb') as f:
+            f.write(enc)
+    else:
+        return enc
 
 
 def encrypt_data(
-        data: T.InData,
-        key: str,
-        size: int = 16,
-        fmt: T.FormatterName = 'base64',
-) -> T.OutData:
-    _data = _pad(data if isinstance(data, bytes)
-                 else data.encode('utf-8'))  # type: bytes
-    _key = sha256(key.encode('utf-8')).digest()  # type: bytes
+    dec: t.Union[str, bytes],
+    key: str,
+    size: int = 16,
+    fmt: str = 'base64',
+) -> bytes:
+    dec2 = _pad(  # type: bytes
+        dec if isinstance(dec, bytes)
+        else dec.encode('utf-8')
+    )
+    key2 = sha256(key.encode('utf-8')).digest()  # type: bytes
     
-    cipher = AESModeOfOperationCBC(_key)
+    cipher = AESModeOfOperationCBC(key2)
     
-    # # _enc_data = cipher.encrypt(_data)  # type: bytes
-    _enc_data = b''
-    for i in range(0, len(_data), size):
-        _enc_data += cipher.encrypt(_data[i:i + size])
-    enc_data = formatters[fmt].encode(_enc_data)  # type: bytes
-    return enc_data
+    enc2 = b''
+    for i in range(0, len(dec2), size):
+        enc2 += cipher.encrypt(dec2[i:i + size])
+    enc = formatters[fmt].encode(enc2)  # type: bytes
+    return enc
 
 
 def _pad(s: bytes, size: int = 16) -> bytes:
-    return s + (
-            (size - len(s) % size)
-            * chr(size - len(s) % size)
-    ).encode('utf-8')
+    return (
+        s + ((size - len(s) % size) * chr(size - len(s) % size)).encode('utf-8')
+    )

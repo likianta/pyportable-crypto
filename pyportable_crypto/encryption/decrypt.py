@@ -1,62 +1,38 @@
 import typing as t
 from hashlib import sha256
 
-from ._io import dump_file
-from ._io import load_file
 from ._pyaes_snippet import AESModeOfOperationCBC
-from .formatter import T as T0
 from .formatter import formatters
 
 
-class T(T0):
-    FileMode = t.Literal['r', 'rb']
-    InData = bytes
-    OutData = t.Union[str, bytes]
-    OutDataType = t.Literal['str', 'bin']
-
-
-def decrypt(
-        data: bytes = None,
-        key: str = None,
-        *,
-        from_file: str = None,
-        from_file_mode: T.FileMode = 'rb',
-        to_file: str = None,
-        to_file_mode: T.FileMode = 'wb',
-) -> T.OutData:
-    assert key
-    if not data:
-        assert from_file and from_file_mode
-        data = load_file(from_file, from_file_mode)
-    # noinspection PyTypeChecker
-    out = decrypt_data(data, key, 'bin' if to_file_mode[-1] == 'b' else 'str')
-    if to_file:
-        dump_file(out, to_file, to_file_mode)
-    return out
+def decrypt_file(
+    file_i: str, file_o: str = None, *, key: str
+) -> t.Optional[bytes]:
+    with open(file_i, 'rb') as f:
+        dec = decrypt_data(f.read(), key)
+    if file_o:
+        with open(file_o, 'wb') as f:
+            f.write(dec)
+    else:
+        return dec
 
 
 def decrypt_data(
-        enc_data: bytes,
-        key: str,
-        type_o: T.OutDataType = 'str',
-        size: int = 16,
-        fmt: T.FormatterName = 'base64',
-) -> T.OutData:
-    _enc_data = formatters[fmt].decode(enc_data)  # type: bytes
-    _key = sha256(key.encode('utf-8')).digest()  # type: bytes
+    enc: bytes,
+    key: str,
+    size: int = 16,
+    fmt: str = 'base64',
+) -> bytes:
+    enc2 = formatters[fmt].decode(enc)  # type: bytes
+    key2 = sha256(key.encode('utf-8')).digest()  # type: bytes
     
-    cipher = AESModeOfOperationCBC(_key)
+    cipher = AESModeOfOperationCBC(key2)
     
-    # # _dec_data = _unpad(cipher.decrypt(_enc_data))  # type: bytes
-    _dec_data = b''
-    for i in range(0, len(_enc_data), size):
-        _dec_data += cipher.decrypt(_enc_data[i:i + size])
-    dec_data = _unpad(_dec_data)  # type: bytes
-    
-    if type_o == 'str':
-        return dec_data.decode('utf-8')
-    else:
-        return dec_data
+    dec2 = b''
+    for i in range(0, len(enc2), size):
+        dec2 += cipher.decrypt(enc2[i:i + size])
+    dec = _unpad(dec2)  # type: bytes
+    return dec
 
 
 def _unpad(s: bytes) -> bytes:
