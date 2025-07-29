@@ -117,7 +117,7 @@ def load_package(pkg_dir: str, name: str = None) -> ModuleType:
     ref: https://stackoverflow.com/a/50395128
     """
     init_file = f'{pkg_dir}/__init__.py'
-    assert fs.exists(init_file)
+    assert fs.exist(init_file)
     if not name: name = fs.basename(pkg_dir)
     spec = importlib.util.spec_from_file_location(name, init_file)
     module = importlib.util.module_from_spec(spec)

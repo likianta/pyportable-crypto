@@ -32,7 +32,7 @@ def generate_cipher_package(
         md5('{}@{}'.format(key, crypto_version).encode('utf-8')).hexdigest()
     ))
     dir_o = '{}/pyportable_runtime'.format(dir_m)
-    if fs.exists(dir_o):
+    if fs.exist(dir_o):
         return dir_o
     else:
         fs.make_dirs(dir_o)
