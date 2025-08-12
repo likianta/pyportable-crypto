@@ -1,5 +1,9 @@
 # Changelog
 
+### 1.5.0 (2025-08-12)
+
+- simplify compiled files
+
 ### 1.4.0 (2025-07-29)
 
 - runtime package can be put inside or outside of the target

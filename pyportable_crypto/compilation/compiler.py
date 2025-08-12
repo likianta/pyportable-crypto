@@ -1,9 +1,8 @@
 import importlib.util
-import sys  # noqa
+import sys
 from types import ModuleType
 
 from lk_utils import fs
-from lk_utils.textwrap import dedent
 
 from ..cipher_gen import cipher_standalone as core
 from ..cipher_gen import generate_cipher_package
@@ -27,40 +26,14 @@ class PyCompiler:
             # pyportable_runtime = load_package(self.runtime_pkgdir)
             self._encrypt = pyportable_runtime.encrypt
             self._decrypt = pyportable_runtime.decrypt
-        
-        self._template = dedent('''
-            try:
-                from pyportable_runtime import decrypt
-            except ImportError:
-                
-                def _search_runtime_location() -> None:
-                    import os
-                    import sys
-                    from os.path import abspath, exists
-                    from typing import Optional
-                    
-                    if x := os.getenv('PYPORTABLE_RUNTIME'):
-                        print('pyportable_runtime', x)
-                        sys.path.insert(0, x)
-                        return
-                    
-                    # search upwards
-                    dir_ = abspath(f'{{__file__}}/..').replace('\\\\', '/')
-                    while True:
-                        if exists(f'{{dir_}}/pyportable_runtime'):
-                            print('pyportable_runtime', dir_)
-                            sys.path.insert(0, dir_)
-                            break
-                        if '/' not in dir_.strip('/'):
-                            raise ModuleNotFoundError('pyportable_runtime')
-                        else:
-                            dir_ = dir_.rsplit('/', 1)[0]
-                
-                _search_runtime_location()
-                from pyportable_runtime import decrypt
-                
-            globals().update(decrypt({cipher_text}, globals(), locals()))
-        ''')
+        self._template = (
+            'globals().update('
+            'pyportable_runtime.decrypt({cipher_text}, globals(), locals())'
+            ')'
+            #   if `pyportable_runtime` raised ModuleNotFoundError, you should -
+            #   call `import pyportable_runtime; pyportable_runtime.setup()` -
+            #   at the very first place.
+        )
     
     @classmethod
     def init_from_runtime(cls, runtime: ModuleType) -> 'PyCompiler':

@@ -7,14 +7,14 @@ def compile_file(
     file_i: str, file_o: str, key: str, add_runtime_package: bool = True
 ) -> None:
     """
-    args:
+    params:
         file_i: the file should be a '.py' file.
         file_o: use the same extension name ('.py') as `file_i`.
     """
     compiler = PyCompiler(key)
     compiler.compile_file(file_i, file_o)
     if add_runtime_package:
-        fs.copy_tree(
+        fs.make_link(
             compiler.runtime_pkgdir,
             f'{fs.parent(file_o)}/pyportable_runtime'
         )
@@ -26,7 +26,7 @@ def compile_dir(
     """
     iterate all ".py" files in `dir_i` and compile them to `dir_o`.
     
-    kwargs:
+    params:
         add_runtime_package (-r):
             'inside': copy the runtime package to `dir_o`.
             'outside': copy the runtime package to `dir_o`'s parent directory.
@@ -35,7 +35,7 @@ def compile_dir(
     compiler = PyCompiler(key)
     compiler.compile_dir(dir_i, dir_o)
     if add_runtime_package == 'inside':
-        fs.copy_tree(
+        fs.make_link(
             compiler.runtime_pkgdir,
             f'{dir_o}/pyportable_runtime'
         )

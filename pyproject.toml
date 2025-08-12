@@ -1,24 +1,24 @@
 [project]
 name = "pyportable-crypto"
-version = "1.4.0"
-description = "Crypto plugin for pyportable-installer project."
-license = "MIT"
+version = "1.5.0"
+
 authors = [{ name = "Likianta", email = "likianta@foxmail.com" }]
-packages = [{ include = "pyportable_crypto" }]
-exclude = ["pyportable_crypto/cipher_gen/_cache/*/"]
-requires-python = ">=3.8"
+description = "Crypto plugin for pyportable-installer project."
 dynamic = ["dependencies"]
+exclude = ["pyportable_crypto/cipher_gen/_cache/*/"]
+license = "MIT"
+packages = [{ include = "pyportable_crypto" }]
+requires-python = ">=3.8"
 
 [project.urls]
 homepage = "https://github.com/likianta/pyportable-crypto"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-argsense = "^1.0.1"
-cython = "^3.0.12"
+argsense = "^1.1.0"
+cython = "^3.1.2"
 lk-logger = "^6.0.6"
 lk-utils = "^3.2.1"
-# lk-utils = { version = "^3.3.0a15", source = "likianta" }
 # setuptools = "^70.0.0"
 setuptools = "*"
 
@@ -26,11 +26,6 @@ setuptools = "*"
 name = "tsinghua"
 url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
 priority = "primary"
-
-[[tool.poetry.source]]
-name = "likianta"
-url = "http://localhost:2131/"
-priority = "supplemental"
 
 [build-system]
 requires = ["poetry-core"]
