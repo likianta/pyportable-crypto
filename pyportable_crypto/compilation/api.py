@@ -30,7 +30,7 @@ def compile_dir(
         add_runtime_package (-r):
             'inside': copy the runtime package to `dir_o`.
             'outside': copy the runtime package to `dir_o`'s parent directory.
-            'none': do not copy the runtime package.
+            'no': do not copy the runtime package.
     """
     compiler = PyCompiler(key)
     compiler.compile_dir(dir_i, dir_o)

@@ -18,20 +18,20 @@ def decrypt_file(
 
 
 def decrypt_data(
-    enc: bytes,
+    data: bytes,
     key: str,
     size: int = 16,
     fmt: str = 'base64',
 ) -> bytes:
-    enc2 = formatters[fmt].decode(enc)  # type: bytes
-    key2 = sha256(key.encode('utf-8')).digest()  # type: bytes
+    datax = formatters[fmt].decode(data)  # type: bytes
+    keyx = sha256(key.encode('utf-8')).digest()  # type: bytes
     
-    cipher = AESModeOfOperationCBC(key2)
+    cipher = AESModeOfOperationCBC(keyx)
     
-    dec2 = b''
-    for i in range(0, len(enc2), size):
-        dec2 += cipher.decrypt(enc2[i:i + size])
-    dec = _unpad(dec2)  # type: bytes
+    decx = b''
+    for i in range(0, len(datax), size):
+        decx += cipher.decrypt(datax[i:i + size])
+    dec = _unpad(decx)  # type: bytes
     return dec
 
 

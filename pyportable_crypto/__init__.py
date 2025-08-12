@@ -13,7 +13,9 @@ if True:
 
 from . import cipher_gen
 from .compilation import PyCompiler
+# TODO: rename to "compile_package"/"encrypt_package"?
 from .compilation import compile_dir
+# TODO: rename to "compile_module"/"encrypt_module"?
 from .compilation import compile_file
 from .encryption import decrypt_data
 from .encryption import decrypt_file

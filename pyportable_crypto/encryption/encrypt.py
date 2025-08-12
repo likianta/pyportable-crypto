@@ -18,23 +18,23 @@ def encrypt_file(
 
 
 def encrypt_data(
-    dec: t.Union[str, bytes],
+    data: t.Union[str, bytes],
     key: str,
     size: int = 16,
     fmt: str = 'base64',
 ) -> bytes:
-    dec2 = _pad(  # type: bytes
-        dec if isinstance(dec, bytes)
-        else dec.encode('utf-8')
+    datax = _pad(  # type: bytes
+        data if isinstance(data, bytes)
+        else data.encode('utf-8')
     )
-    key2 = sha256(key.encode('utf-8')).digest()  # type: bytes
+    keyx = sha256(key.encode('utf-8')).digest()  # type: bytes
     
-    cipher = AESModeOfOperationCBC(key2)
+    cipher = AESModeOfOperationCBC(keyx)
     
-    enc2 = b''
-    for i in range(0, len(dec2), size):
-        enc2 += cipher.encrypt(dec2[i:i + size])
-    enc = formatters[fmt].encode(enc2)  # type: bytes
+    encx = b''
+    for i in range(0, len(datax), size):
+        encx += cipher.encrypt(datax[i:i + size])
+    enc = formatters[fmt].encode(encx)  # type: bytes
     return enc
 
 

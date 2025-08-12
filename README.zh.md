@@ -38,7 +38,7 @@ encrypt_file(file_i, file_o, key)
 # 文件的加密效果见下面的截图.
 ```
 
-![image-20211213220357973](.assets/README.zh/image-20211213220357973.png)
+![image-20211213220357973](.assets/357973.png)
 
 ### 解密操作
 
@@ -115,4 +115,3 @@ globals(decrypt(b'ZKIP01h5mH/6sESFUrAGwQ==...', globals(), locals()))
 其中 decrypt 函数会返回一个 python 字典对象. 调用者可以像平时一样使用该模块, 无需关心有什么内部变化需要处理. 再次提醒, 整个过程中并不会把任何源代码暴露给使用者, 并且在多方面验证和隔绝了使用者从加载后的 python 字典对象攫取源代码的可能性.
 
 PS: 不要忘记把 `pyportable_runtime` 运行时包随要发布的应用程序一起打包. 并且在调用其他模块之前, 它需要最先被加入到 `sys.path`.
-

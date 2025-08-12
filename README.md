@@ -1,5 +1,7 @@
 # PyPortable Crypto
 
+- [中文版](./README.zh.md) (内容已过时, 待更新)
+
 An experimental encryption tool for encrypting Python code.
 
 Warning: This project is under proof-in-concept stage, no guarantee for 
@@ -7,169 +9,130 @@ production use.
 
 ## Installation
 
-```sh
+```shell
 pip install pyportable-crypto
 ```
 
-## How To Use
+## Usage
+
+Both can be used in command line and Python script.
 
 ### Get help
 
-```sh
+For command line usage, check the help info below:
+
+```shell
 # list all commands
 python -m pyportable_crypto -h
 
-# get help of specific command
+# get help for specific command
 python -m pyportable_crypto <command> -h
 ```
 
-### Encrypt module
+![](./.assets/153343.png)
 
-```sh
-python -m pyportable_crypto compile-file hello_world.py 
+For Python script usage, check the docstrings of the public functions in `pyportable_crypto/__init__.py`.
+
+### Encrypt/decrypt a snippet of text
+
+In command line:
+
+```shell
+python -m pyportable_crypto encrypt-text <text> <key>
+python -m pyportable_crypto decrypt-text <encrypted_text> <key>
 ```
 
-This generates:
+![](./.assets/155408.png)
 
-```
-|- hello_world.py
-|- encrypted
-    |- hello_world.py
-    |- pyportable_runtime.pyd
-```
-
-### Encrypt package
-
-```sh
-python -m pyportable_crypto compile-dir hello_world
-#   make sure there is a '__init__.py' in this directory. 
-```
-
-This generates:
-
-```
-|- hello_world
-    |- __init__.py
-    |- some_module.py
-    |- ...
-|- encrypted
-    |- hello_world
-        |- __init__.py
-        |- some_module.py
-        |- ...
-        |- pyportable_runtime.pyd
-```
-
----
-
-[中文版点此阅读](./README.zh.md)
-
-`pyportable-crypto` is an open source python project made for easily...
-
-- Encrypting/decrypting texts.
-- Protecting python source code (co-worked with [pyportable-installer](https://github.com/likianta/pyportable-installer)).
-
-## Installation
-
-```sh
-pip install pyportable-crypto
-```
-
-The minimum required python version is 3.8.
-
-## Get Started
-
-### Encryption
+In Python script:
 
 ```python
 from pyportable_crypto import encrypt_data
-from pyportable_crypto import encrypt_file
+encrypt_data('hello-world', key='test123')
+# -> b'LQ02l/s/fanlGsad8rQZcw=='
+encrypt_data(b'hello-world', key='test123')
+# -> b'LQ02l/s/fanlGsad8rQZcw=='
 
-key = 'abc123456'
-
-text_i = 'hello world'
-text_o = encrypt_data(text_i, key)  # type: bytes
-print(text_o)  # -> b'ZKIP01h5mH/6sESFUrAGwQ=='
-
-file_i = 'file_i.md'
-file_o = 'file_o.md'
-encrypt_file(file_i, file_o, key)  # returns file_o
-# see example image below.
-```
-
-![image-20211213220357973](.assets/README/image-20211213220357973.png)
-
-### Decryption
-
-```python
 from pyportable_crypto import decrypt_data
-from pyportable_crypto import decrypt_file
-
-key = 'abc123456'
-
-text_i = b'ZKIP01h5mH/6sESFUrAGwQ=='  # type: bytes
-text_o = decrypt_data(text_i, key)  # type: str
-print(text_o)  # -> 'hello world'
-
-file_i = 'file_i.md'
-file_o = 'file_o.md'
-decrypt_file(file_i, file_o, key)  # returns file_o
+decrypt_data(b'LQ02l/s/fanlGsad8rQZcw==', key='test123')
+# -> b'hello-world'
 ```
 
-### Protect Python Source Code
+### Compile Python modules/packages
 
-This is pyportable-crypto's highlighted feature. You can use its methods both in script and in cmd to compile your python files to be obfuscated. Then share it to client side, the users can run it but cannot read it, cause every file is encrypted by this library and the key is hidden in its runtime package which is also UNEXTRACTABLE (see related research in this [article (*TODO*)](TODO)).
-
-**Compile in script**
+It is slightly different with `encrypt_data`, that we add a bit of wrapper code 
+to make the module still works feeling like it is a normal module.
 
 ```python
-from pyportable_crypto import Compiler
-from uuid import uuid1
-compiler = Compiler(key=str(uuid1()), dir_o='~/my_project/lib')
-#   `[param]dir_o` is the dir to generate a custom runtime package in it.
-#   it means a package `{dir_o}/pyportable_runtiem` will be created.
-#   the `[param]key` is stored in pyportable_runtiem and will be used for 
-#   loading py-encrypted files in user's computer.
+from pyportable_crypto import compile_file
+compile_file('hello_world.py', 'hello_world_enc.py', key='test123')
 
-# compile single file
-compiler.compile_file(
-    file_i='~/my_project/src/main.py', 
-    file_o='~/my_project/dist/main.py'
-    #   use the same name and the same extension name.
+from pyportable_crypto import compile_dir
+compile_dir(
+    'example_package', 
+    'example_package_enc', 
+    key='test123', 
+    add_runtime_package='outside'  # 'inside' | 'outside' | 'no'
 )
-
-# compile directory (by recursively)
-compiler.compile_dir(
-    dir_i='~/my_project/src',
-    dir_o='~/my_project/dist',
-    # file_exists_scheme='skip'
-)
-#   it is suggested to use an empty folder to store the compiled files.
-#   compiler compiles source files to dist with the same file name and 
-#   the same file extension name.
-
 ```
 
-**Compile in CMD**
+-   For the first time compilation, it will take one minute or so. 
+    
+    The subsequent calls with the same key will be much faster since it is cached.
 
-```sh
-python -m pyportable_crypto compile-file <file_i> <file_o> <key>
-#   the bundled `pyportable_runtime` package will also be generated in 
-#   the same directory of <file_o>.
+-   The compiled file is also ".py" file, you can open it with any text editor.
+    The content would be like this:
+    
+    ![](./.assets/161018.png)
 
-python -m pyportable_crypto compile-dir <dir_i> <dir_o> <key>
-#   the bundled `pyportable_runtime` package will also be generated in 
-#   the same directory with <dir_o>.
-```
+-   There will create a side package `pyportable_runtime` besides 
+    "hello_world_enc.py", or, for `compile_dir` it is created depending on the 
+    value of `[param]add_runtime_package`.
+    
+    For example `add_runtime_package='inside'` is:
 
-The compiled files are looked like this:
+    ```
+    |= example_package
+        |- __init__.py
+        |- foo.py
+        |- bar.py
+    |= example_package_enc
+        |- __init__.py
+        |- foo.py  # encrypted
+        |- bar.py  # encrypted
+        |= pyportable_runtime  # inside
+            |- __init__.py
+            |- cipher.pyd
+    ```
+    
+    For `add_runtime_package='outside'` is:    
 
-```python
-# some_compiled_files.py
-from pyportable_runtime import decrypt
-globals(decrypt(b'ZKIP01h5mH/6sESFUrAGwQ==...', globals(), locals()))
-```
+    ```
+    |= example_package
+        |- __init__.py
+        |- foo.py
+        |- bar.py
+    |= example_package_enc
+        |- __init__.py
+        |- foo.py  # encrypted
+        |- bar.py  # encrypted
+    |= pyportable_runtime  # outside
+        |- __init__.py
+        |- cipher.pyd
+    ```
 
-The function `decrypt` converts encrypted text to python object (a dict type), users can access this object but cannot get the real source code from it.
+-   You can import the result and use it like a normal module.
 
-PS: Don't forget to package `~/my_project/lib/pyportable_runtime` to distribution and add it to `sys.path` before importing other modules.
+    ```python
+    from hello_world import echo
+    echo('hello world')
+    # -> 'hello world'
+    
+    # note: add the following line at the top of your script.
+    import pyportable_runtime  # noqa
+    pyportable_runtime.setup()  # just do it once. will be globally effected.
+    
+    from hello_world_enc import echo
+    echo('hello world')
+    # -> 'hello world'
+    ```
