@@ -6,16 +6,16 @@ notes:
     - do not use walrus operator in this module, cython doesn't support it.
     - do not use relative imports, nor importing custom modules.
 """
+
 try:
     from os.path import dirname
     from os.path import exists
-    
     file = dirname(__file__) + '/__salt__'
     if exists(file):
         with open(file, 'r', encoding='utf-8') as file:
             __SALT_ENC__ = file.read().strip()  # type: str
     else:
-        __SALT_ENC__ = ''  # enc: 'encrypted'
+        __SALT_ENC__ = ''  # enc: 'encrypted'  # noqa
 except Exception:
     __SALT_ENC__ = ''  # enc: 'encrypted'
 finally:
@@ -26,16 +26,22 @@ finally:
 
 
 # noinspection PyUnusedLocal
-def encrypt(plaintext: str, *args, add_shell=False, salt=__SALT_ENC__) -> bytes:
+def encrypt(
+    plaintext: str,
+    *args,
+    add_shell: bool = False,
+    salt: str = __SALT_ENC__
+) -> bytes:
     # `*args` has no effect, just be compatible with
     #   `../encrypt.py:[func]encrypt_data`.
     return __main(plaintext, 'encrypt', add_shell=add_shell, salt=salt)
 
 
 def decrypt(
-        ciphertext: bytes,
-        globals_: dict = None, locals_: dict = None,
-        salt=__SALT_ENC__
+    ciphertext: bytes,
+    globals_: dict = None,
+    locals_: dict = None,
+    salt: str = __SALT_ENC__
 ) -> dict:
     # noinspection PyUnusedLocal
     def __validate_self():
@@ -53,12 +59,16 @@ def decrypt(
         text = sub(r"b'[^\']+'", "b'...'", text)
         # see template generation at `pyportable_installer.compilers
         # .pyportable_encryptor.PyportableEncryptor.__init__`
-        if text != dedent('''
+        if text != dedent(
+            '''
             from pyportable_runtime import decrypt
             globals().update(decrypt(b'...', globals(), locals()))
-        ''').strip():
-            raise RuntimeError(filename, 'Decompling stopped because the '
-                                         'source code was manipulated!')
+            '''
+        ).strip():
+            raise RuntimeError(
+                filename,
+                'Decompling stopped because the source code was manipulated!'
+            )
     
     # __validate_self()
     # __validate_caller(globals_['__file__'])

@@ -1,6 +1,6 @@
 [project]
 name = "pyportable-crypto"
-version = "1.5.0"
+version = "1.5.1"
 
 authors = [{ name = "Likianta", email = "likianta@foxmail.com" }]
 description = "Crypto plugin for pyportable-installer project."
@@ -17,8 +17,8 @@ homepage = "https://github.com/likianta/pyportable-crypto"
 python = "^3.8"
 argsense = "^1.1.0"
 cython = "^3.1.2"
-lk-logger = "^6.0.6"
-lk-utils = "^3.2.1"
+lk-logger = "^6.0.7"
+lk-utils = "^3.4.3"
 # setuptools = "^70.0.0"
 setuptools = "*"
 

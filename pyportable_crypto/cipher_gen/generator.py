@@ -49,7 +49,9 @@ def generate_cipher_package(
     code = code.replace('__KEY__', key)
     fs.dump(code, file_m)
     
-    with lk_logger.spinner('compiling... (this may take several minutes)'):
+    with lk_logger.spinner(
+        'compiling binary with secret key (this may take take a while)...'
+    ):
         with lk_logger.timing(True):
             try:
                 run_cmd_args(

@@ -23,4 +23,4 @@ from .encryption import encrypt_data
 from .encryption import encrypt_file
 from .encryption import keygen
 
-__version__ = '1.5.0'
+__version__ = '1.5.1'

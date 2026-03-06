@@ -4,7 +4,7 @@
 
 An experimental encryption tool for encrypting Python code.
 
-Warning: This project is under proof-in-concept stage, no guarantee for 
+Warning: This project is under proof-of-concept stage, no guarantee for 
 production use.
 
 ## Installation
@@ -19,7 +19,7 @@ Both can be used in command line and Python script.
 
 ### Get help
 
-For command line usage, check the help info below:
+For command line usage, get help with `-h` or `--help`:
 
 ```shell
 # list all commands

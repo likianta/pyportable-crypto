@@ -1,15 +1,19 @@
 # Changelog
 
+### 1.5.1 (2026-03-06)
+
+- Tweaks.
+
 ### 1.5.0 (2025-08-12)
 
-- simplify compiled files
+- Simplify compiled files.
 
 ### 1.4.0 (2025-07-29)
 
-- runtime package can be put inside or outside of the target
-- refactor core functions' signature
+- Runtime package can be put inside or outside of the target.
+- Refactor core functions' signature.
 
 ### 1.3.0 (2024-11-26)
 
-- refine directory structure of runtime package
-- improve usability
+- Refine directory structure of runtime package.
+- Improve usability.
