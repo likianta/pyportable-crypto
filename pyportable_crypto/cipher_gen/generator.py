@@ -2,7 +2,7 @@ import sys
 from hashlib import md5
 from platform import system
 
-import lk_logger
+import neoprint as np
 from lk_utils import dedent
 from lk_utils import dump
 from lk_utils import fs
@@ -21,55 +21,57 @@ def generate_cipher_package(
             - cannot be empty.
     """
     from .. import __version__ as crypto_version
-    
+
     assert key, 'key cannot be empty!'
     # assert re.compile(r'[a-zA-Z_]\w*'), \
     #     'the dirname should be a valid python package name format!'
-    
+
     dir_i = fs.xpath('.')  # current dir
-    dir_m = fs.xpath('_cache/{}'.format(
-        md5('{}@{}'.format(key, crypto_version).encode('utf-8')).hexdigest()
-    ))
+    dir_m = fs.xpath(
+        '_cache/{}'.format(
+            md5('{}@{}'.format(key, crypto_version).encode('utf-8')).hexdigest()
+        )
+    )
     dir_o = '{}/pyportable_runtime'.format(dir_m)
     if fs.exist(dir_o):
         return dir_o
     else:
         fs.make_dirs(dir_o)
-    
+
     file_i = '{}/cipher_standalone.py'.format(dir_i)
     file_m = '{}/cipher.py'.format(dir_m)
     file_o = '{}/cipher.{}'.format(
         dir_o, 'pyd' if SYSTEM == 'windows' else 'so'
     )
-    
+
     # -------------------------------------------------------------------------
-    
+
     code = fs.load(file_i)
     assert '__KEY__' in code
     code = code.replace('__KEY__', key)
     fs.dump(code, file_m)
-    
-    with lk_logger.spinner(
-        'compiling binary with secret key (this may take take a while)...'
-    ):
-        with lk_logger.timing(True):
-            try:
-                run_cmd_args(
-                    python_executable_path,
-                    # note we don't use abspath because the path in poetry -
-                    # virtual env may be very long, which will cause windows -
-                    # msvc linking crashed.
-                    'cythonize.py',  # file in current dir.
-                    fs.relpath(file_m, dir_i),
-                    'build_ext',
-                    '--inplace',
-                    cwd=dir_i,
-                )
-            except Exception:
-                fs.remove_tree(dir_o)
-                raise
-    fs.move(fs.find_file_paths(dir_m, ('.pyd', '.so'))[0], file_o)
-    
+
+    np.show(
+        ':v5', 'compiling binary with secret key (this may take a while)...'
+    )
+    try:
+        run_cmd_args(
+            python_executable_path,
+            # note we don't use abspath because the path in poetry -
+            # virtual env may be very long, which will cause windows -
+            # msvc linking crashed.
+            'cythonize.py',  # file in current dir.
+            fs.relpath(file_m, dir_i),
+            'build_ext',
+            '--inplace',
+            cwd=dir_i,
+        )
+    except Exception:
+        fs.remove_tree(dir_o)
+        raise
+    else:
+        fs.move(fs.find_file_paths(dir_m, ('.pyd', '.so'))[0], file_o)
+
     pyversion = sys.version_info[:2]  # e.g. (3, 8)
     dump(
         dedent(
@@ -106,7 +108,7 @@ def generate_cipher_package(
             __version__ = '{1}'
             '''
         ).format(pyversion, crypto_version),
-        f'{dir_o}/__init__.py'
+        f'{dir_o}/__init__.py',
     )
-    
+
     return dir_o
