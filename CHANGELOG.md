@@ -1,6 +1,6 @@
 # Changelog
 
-### 1.5.2 (wip)
+### 1.5.2 (2026-06-30)
 
 - Generalize `encrypt` `decrypt` parameters.
 - Remove `lk-logger` dependency.
