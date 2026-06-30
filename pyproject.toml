@@ -1,17 +1,18 @@
 [project]
 name = "pyportable-crypto"
-version = "1.5.2"
+version = "1.6.0a0"
 description = "Crypto plugin for pyportable-installer project."
 authors = [{ name = "Likianta", email = "likianta@foxmail.com" }]
 exclude = ["pyportable_crypto/cipher_gen/_cache/*/"]
 # readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "argsense>=1.1.2",
-    "cython>=3.2.5",
+    "cryptography>=49.0.0",
+    # "cython>=3.2.5",
     "lk-utils>=3.6.0",
     "neoprint>=0.1.4",
-    "setuptools>=82.0.1",
+    # "setuptools>=82.0.1",
 ]
 
 [build-system]

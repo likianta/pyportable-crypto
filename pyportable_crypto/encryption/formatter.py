@@ -4,16 +4,17 @@ import typing as t
 from collections import namedtuple
 
 
+Codec = namedtuple('Codec', ['encode', 'decode'])
+
+
 class T:
     FormatterName = t.Literal['raw', 'binascii', 'base64']
-    Formatters = t.Dict[str, 'FormatterCodec']
+    Formatters = t.Dict[str, Codec]
 
-
-_codec = namedtuple('FormatterCodec', ['encode', 'decode'])
 
 formatters = {
-    'raw'     : _codec(lambda x: x, lambda x: x),
-    'binascii': _codec(binascii.hexlify, binascii.unhexlify),
-    'base64'  : _codec(base64.b64encode, base64.b64decode),
+    'raw': Codec(lambda x: x, lambda x: x),
+    'binascii': Codec(binascii.hexlify, binascii.unhexlify),
+    'base64': Codec(base64.b64encode, base64.b64decode),
     # TODO: emoji formatter
 }

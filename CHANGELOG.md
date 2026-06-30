@@ -1,5 +1,9 @@
 # Changelog
 
+### 1.6.0 (wip)
+
+...
+
 ### 1.5.2 (2026-06-30)
 
 - Generalize `encrypt` `decrypt` parameters.

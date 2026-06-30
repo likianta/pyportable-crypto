@@ -1,9 +1,10 @@
+import os
 import typing as t
 from hashlib import sha256
 
+from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
 from lk_utils import fs
 
-from ._pyaes_snippet import AESModeOfOperationCBC
 from .formatter import formatters
 
 
@@ -32,35 +33,22 @@ def encrypt(
     return data_enc
 
 
-def encrypt_file(
-    file_i: str, file_o: t.Optional[str] = None, *, key: str
-) -> t.Optional[bytes]:
-    with open(file_i, 'rb') as f:
-        enc = encrypt_data(f.read(), key)
-    if file_o:
-        with open(file_o, 'wb') as f:
-            f.write(enc)
-    else:
-        return enc
-
-
 def encrypt_data(
-    data: t.Union[str, bytes], key: str, size: int = 16, fmt: str = 'base64'
+    data: t.Union[str, bytes], key: str, fmt: str = 'base64'
 ) -> bytes:
-    datax = _pad(  # type: bytes
-        data if isinstance(data, bytes) else data.encode('utf-8')
-    )
-    keyx = sha256(key.encode('utf-8')).digest()  # type: bytes
+    """
+    https://share.gemini.google/sBT8jVKFDnxu
+    """
+    keyx = sha256(key.encode('utf-8')).digest()
+    chacha = ChaCha20Poly1305(keyx)
+    nonce = os.urandom(12)
 
-    cipher = AESModeOfOperationCBC(keyx)
-
-    encx = b''
-    for i in range(0, len(datax), size):
-        encx += cipher.encrypt(datax[i : i + size])
-    enc = formatters[fmt].encode(encx)  # type: bytes
-    return enc
+    plain_data = data if isinstance(data, bytes) else data.encode('utf-8')
+    cipher_data = chacha.encrypt(nonce, plain_data, None)
+    return formatters[fmt].encode(nonce + cipher_data)
 
 
+# DELETE
 def _pad(s: bytes, size: int = 16) -> bytes:
     return s + ((size - len(s) % size) * chr(size - len(s) % size)).encode(
         'utf-8'
