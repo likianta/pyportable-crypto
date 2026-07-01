@@ -3,7 +3,7 @@ from lk_utils import fs
 from .compiler import PyCompiler
 
 
-def compile_file(
+def compile_module(
     file_i: str, file_o: str, key: str, add_runtime_package: bool = True
 ) -> None:
     """
@@ -20,7 +20,7 @@ def compile_file(
         )
 
 
-def compile_dir(
+def compile_package(
     dir_i: str, dir_o: str, key: str, add_runtime_package: str = 'inside'
 ) -> None:
     """

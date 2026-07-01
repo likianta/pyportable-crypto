@@ -1,11 +1,7 @@
-# TODO
-# - rename `compile_dir` to `compile_package` or `encrypt_package`
-# - rename `compile_file` to `compile_module` or `encrypt_module`
-
 from . import cipher_gen
 from .compilation import PyCompiler
-from .compilation import compile_dir
-from .compilation import compile_file
+from .compilation import compile_module
+from .compilation import compile_package
 from .encryption import decrypt
 from .encryption import decrypt_data
 from .encryption import encrypt

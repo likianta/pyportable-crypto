@@ -4,8 +4,8 @@ from secrets import token_urlsafe
 from argsense import cli
 
 from .cipher_gen import generate_cipher_package
-from .compilation import compile_dir
-from .compilation import compile_file
+from .compilation import compile_module
+from .compilation import compile_package
 from .encryption import decrypt
 from .encryption import encrypt
 
@@ -44,8 +44,8 @@ def generate_runtime_package(dir_o: str, key: str) -> None:
     generate_cipher_package(dir_o, key)
 
 
-cli.add_cmd(compile_file)
-cli.add_cmd(compile_dir)
+cli.add_cmd(compile_module)
+cli.add_cmd(compile_package)
 
 
 @cli
