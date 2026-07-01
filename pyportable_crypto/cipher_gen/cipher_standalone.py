@@ -38,18 +38,16 @@ def encrypt(
 
 
 def decrypt(
-    ciphertext: bytes,
-    globals_: dict = None,
-    locals_: dict = None,
-    salt: str = __SALT_ENC__
+    ciphertext: bytes, globals_=None, locals_=None, salt=__SALT_ENC__
 ) -> dict:
-    # noinspection PyUnusedLocal
+    assert globals_ is None or type(globals_) is dict
+    assert locals_ is None or type(locals_) is dict
+
     def __validate_self():
         # TODO: check whether self package (pyportable_crypto) had been
         #   modified or not. (tip: use md5 checksum.)
         pass
     
-    # noinspection PyUnusedLocal
     def __validate_caller(filename):
         from re import sub
         from textwrap import dedent

@@ -75,6 +75,9 @@ def generate_cipher_package(
                 'nuitka',
                 '--module',
                 'cipher.py',  # file1
+                # optimizations
+                # https://chatgpt.com/share/6a4490af-5a60-83ee-8bc9-2503f9263f5e
+                '--lto=yes',
             ),
             cwd=dir1,
             verbose=True,
