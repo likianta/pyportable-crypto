@@ -41,19 +41,17 @@ def decrypt_file(file_i: str, file_o: str, key: str) -> None:
 
 @cli
 def generate_runtime_package(dir_o: str, key: str) -> None:
-    generate_cipher_package(dir_o, key)
+    """
+    create "pyportable_runtime" package under `dir_o`.
+    """
+    generate_cipher_package(key, dir_o=dir_o)
 
 
 cli.add_cmd(compile_module)
 cli.add_cmd(compile_package)
 
 
-@cli
-def deploy_compiled_binary(dir_o: str, key: str) -> None:
-    generate_cipher_package(dir_o, key)
-
-
 if __name__ == '__main__':
-    # py -m pyportable_crypto -h
-    # py -m pyportable_crypto compile-dir -h
+    # python -m pyportable_crypto -h
+    # python -m pyportable_crypto compile-dir -h
     cli.run()

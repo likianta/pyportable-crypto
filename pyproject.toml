@@ -1,6 +1,6 @@
 [project]
 name = "pyportable-crypto"
-version = "1.6.0a0"
+version = "1.6.0a3"
 description = "Crypto plugin for pyportable-installer project."
 authors = [{ name = "Likianta", email = "likianta@foxmail.com" }]
 exclude = ["pyportable_crypto/cipher_gen/_cache/*/"]
@@ -9,10 +9,9 @@ requires-python = ">=3.10"
 dependencies = [
     "argsense>=1.1.2",
     "cryptography>=49.0.0",
-    # "cython>=3.2.5",
-    "lk-utils>=3.6.0",
+    "lk-utils>=3.6.1a0",
     "neoprint>=0.1.4",
-    # "setuptools>=82.0.1",
+    "nuitka>=4.1.3",
 ]
 
 [build-system]
@@ -46,7 +45,6 @@ skip-magic-trailing-comma = true
 
 [tool.ruff.lint.isort]
 force-single-line = true
-# no-sections = true
 relative-imports-order = "closest-to-furthest"
 
 [tool.ruff.lint.per-file-ignores]

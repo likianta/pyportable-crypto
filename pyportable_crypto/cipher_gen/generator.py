@@ -1,18 +1,19 @@
 import sys
+import typing as tp
 from hashlib import md5
 from platform import system
 
 import neoprint as np
 from lk_utils import dedent
-from lk_utils import dump
 from lk_utils import fs
 from lk_utils import run_cmd_args
 
-SYSTEM = system().lower()
-
 
 def generate_cipher_package(
-    key: str, python_executable_path: str = sys.executable
+    key: str,
+    dir_o: tp.Optional[str] = None,
+    # python_executable_path: str = sys.executable,
+    overwrite: bool = False,
 ) -> str:
     """
     params:
@@ -26,54 +27,66 @@ def generate_cipher_package(
     # assert re.compile(r'[a-zA-Z_]\w*'), \
     #     'the dirname should be a valid python package name format!'
 
-    dir_i = fs.xpath('.')  # current dir
-    dir_m = fs.xpath(
+    dir0 = fs.here()
+    dir1 = fs.there(
         '_cache/{}'.format(
             md5('{}@{}'.format(key, crypto_version).encode('utf-8')).hexdigest()
         )
     )
-    dir_o = '{}/pyportable_runtime'.format(dir_m)
-    if fs.exist(dir_o):
-        return dir_o
+    dir2 = '{}/pyportable_runtime'.format(dir1)
+    dir3 = '{}/pyportable_runtime'.format(dir_o or dir1)
+    if fs.exist(dir2):
+        if overwrite:
+            fs.remove_tree(dir2)
+        else:
+            if dir2 != dir3:
+                fs.make_link(dir2, dir3, True)
+            return dir3
     else:
-        fs.make_dirs(dir_o)
+        fs.make_dirs(dir2)
 
-    file_i = '{}/cipher_standalone.py'.format(dir_i)
-    file_m = '{}/cipher.py'.format(dir_m)
-    file_o = '{}/cipher.{}'.format(
-        dir_o, 'pyd' if SYSTEM == 'windows' else 'so'
+    file0 = '{}/cipher_standalone.py'.format(dir0)
+    file1 = '{}/cipher.py'.format(dir1)
+    file2 = '{}/cipher.{}'.format(
+        dir2, 'pyd' if system().lower() == 'windows' else 'so'
     )
+    # file3 = '{}/cipher.{}'.format(
+    #     dir3, 'pyd' if system().lower() == 'windows' else 'so'
+    # )
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
 
-    code = fs.load(file_i)
+    code = fs.load(file0)
     assert '__KEY__' in code
-    code = code.replace('__KEY__', key)
-    fs.dump(code, file_m)
+    code = code.replace('__KEY__', key)  # TODO
+    fs.dump(code, file1)
 
     np.show(
-        ':v5', 'compiling binary with secret key (this may take a while)...'
+        ':v5',
+        'compiling {} with secret key (this may take a while)...'.format(
+            fs.basename(file2)
+        ),
     )
     try:
         run_cmd_args(
-            python_executable_path,
-            # note we don't use abspath because the path in poetry -
-            # virtual env may be very long, which will cause windows -
-            # msvc linking crashed.
-            'cythonize.py',  # file in current dir.
-            fs.relpath(file_m, dir_i),
-            'build_ext',
-            '--inplace',
-            cwd=dir_i,
+            (
+                sys.executable,
+                '-m',
+                'nuitka',
+                '--module',
+                'cipher.py',  # file1
+            ),
+            cwd=dir1,
+            verbose=True,
         )
     except Exception:
-        fs.remove_tree(dir_o)
+        fs.remove_tree(dir1)
         raise
     else:
-        fs.move(fs.find_file_paths(dir_m, ('.pyd', '.so'))[0], file_o)
+        fs.move(fs.find_file_paths(dir1, ('.pyd', '.so'))[0], file2)
 
     pyversion = sys.version_info[:2]  # e.g. (3, 8)
-    dump(
+    fs.dump(
         dedent(
             '''
             """
@@ -90,7 +103,7 @@ def generate_cipher_package(
             _target_pyversion = {0}
             if _current_pyversion != _target_pyversion:
                 raise Exception(
-                    "Python interpreter version is not matched! "
+                    "Python interpreter version does not match! "
                     "Required Python {{}}, got {{}} ({{}})".format(
                         ', '.join(map(str, _target_pyversion)),
                         ', '.join(map(str, _current_pyversion)),
@@ -108,7 +121,10 @@ def generate_cipher_package(
             __version__ = '{1}'
             '''
         ).format(pyversion, crypto_version),
-        f'{dir_o}/__init__.py',
+        f'{dir2}/__init__.py',
     )
 
-    return dir_o
+    if dir2 != dir3:
+        fs.make_link(dir2, dir3, True)
+
+    return dir3

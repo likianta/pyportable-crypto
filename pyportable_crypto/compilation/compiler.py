@@ -1,47 +1,52 @@
-import importlib.util
 import sys
+import typing as tp
 from types import ModuleType
 
 from lk_utils import fs
 
-from ..cipher_gen import cipher_standalone as core
 from ..cipher_gen import generate_cipher_package
 
 
 class PyCompiler:
     runtime_pkgdir: str
-    _decrypt: core.decrypt
-    _encrypt: core.encrypt
-    
-    def __init__(self, key: str, _runtime: ModuleType = None) -> None:
+    _decrypt: tp.Callable
+    _encrypt: tp.Callable
+
+    def __init__(
+        self,
+        key: tp.Optional[str] = None,
+        _runtime: tp.Optional[ModuleType] = None,
+    ) -> None:
         if _runtime:
-            self.runtime_pkgdir = fs.parent(_runtime.__file__)
+            self.runtime_pkgdir = fs.parent(tp.cast(str, _runtime.__file__))
             self._encrypt = _runtime.encrypt
             self._decrypt = _runtime.decrypt
         else:
             assert key, '`key` is required to generate the runtime package.'
             self.runtime_pkgdir = generate_cipher_package(key)
             sys.path.insert(0, fs.parent(self.runtime_pkgdir))
-            import pyportable_runtime  # noqa
-            # pyportable_runtime = load_package(self.runtime_pkgdir)
+            #   note: `self.runtime_pkgdir` indicates to
+            #   `<some_dir>/pyportable_runtime/`. thus we can import
+            #   `pyportable_runtime` then.
+
+            import pyportable_runtime  # ty: ignore
+
             self._encrypt = pyportable_runtime.encrypt
             self._decrypt = pyportable_runtime.decrypt
+
         self._template = (
             'import pyportable_runtime\n'
             'globals().update('
             'pyportable_runtime.decrypt({cipher_text}, globals(), locals())'
             ')'
-            #   if `pyportable_runtime` raised ModuleNotFoundError, you should -
-            #   call `import pyportable_runtime; pyportable_runtime.setup()` -
-            #   at the very first place.
         )
-    
+
     @classmethod
     def init_from_runtime(cls, runtime: ModuleType) -> 'PyCompiler':
         return cls('', _runtime=runtime)
-    
+
     # -------------------------------------------------------------------------
-    
+
     def compile_file(self, file_i: str, file_o: str) -> None:
         if fs.filename(file_i) == '__init__.py':
             print(':rp', '[green]{}[/]'.format(file_o))
@@ -51,7 +56,7 @@ class PyCompiler:
             text = self._encrypt(fs.load(file_i), add_shell=True)
             code = self._template.format(cipher_text=text)
             fs.dump(code, file_o)
-    
+
     def compile_dir(
         self, dir_i: str, dir_o: str, include_other_files: bool = True
     ) -> None:
@@ -86,15 +91,16 @@ class PyCompiler:
         print(':i0s')
 
 
-def load_package(pkg_dir: str, name: str = None) -> ModuleType:
-    """
-    ref: https://stackoverflow.com/a/50395128
-    """
-    init_file = f'{pkg_dir}/__init__.py'
-    assert fs.exist(init_file)
-    if not name: name = fs.basename(pkg_dir)
-    spec = importlib.util.spec_from_file_location(name, init_file)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    # sys.modules[name] = module
-    return module
+# def load_package(pkg_dir: str, name: tp.Optional[str] = None) -> ModuleType:
+#     """
+#     ref: https://stackoverflow.com/a/50395128
+#     """
+#     init_file = f'{pkg_dir}/__init__.py'
+#     assert fs.exist(init_file)
+#     if not name:
+#         name = fs.basename(pkg_dir)
+#     spec = importlib.util.spec_from_file_location(name, init_file)
+#     module = importlib.util.module_from_spec(spec)
+#     spec.loader.exec_module(module)
+#     # sys.modules[name] = module
+#     return module
