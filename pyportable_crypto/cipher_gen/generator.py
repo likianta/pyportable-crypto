@@ -63,7 +63,7 @@ def generate_cipher_package(
 
     np.show(
         ':v5',
-        'compiling {} with secret key (this may take a while)...'.format(
+        'compiling {} with secret key (this may take a while)'.format(
             fs.basename(file2)
         ),
     )
