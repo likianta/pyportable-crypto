@@ -3,3 +3,4 @@ from .decrypt import decrypt
 from .decrypt import decrypt_data
 from .encrypt import encrypt
 from .encrypt import encrypt_data
+from .keygen import add_salt

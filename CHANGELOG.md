@@ -8,6 +8,7 @@
 
 - Use ChaCha20 instead of AES for encryption.
 - Use Nuitka instead of Cython for compilation.
+- Force adding salt to key in compilation.
 
 ### 1.5.2 (2026-06-30)
 

@@ -5,6 +5,7 @@ from types import ModuleType
 from lk_utils import fs
 
 from ..cipher_gen import generate_cipher_package
+from ..encryption import add_salt
 
 
 class PyCompiler:
@@ -23,7 +24,7 @@ class PyCompiler:
             self._decrypt = _runtime.decrypt
         else:
             assert key, '`key` is required to generate the runtime package.'
-            self.runtime_pkgdir = generate_cipher_package(key)
+            self.runtime_pkgdir = generate_cipher_package(add_salt(key))
             sys.path.insert(0, fs.parent(self.runtime_pkgdir))
             #   note: `self.runtime_pkgdir` indicates to
             #   `<some_dir>/pyportable_runtime/`. thus we can import
@@ -89,18 +90,3 @@ class PyCompiler:
                 print(':rpi', '[bright_black]{}[/]'.format(f.relpath))
                 fs.copy_file(file_i, file_o, True)
         print(':i0s')
-
-
-# def load_package(pkg_dir: str, name: tp.Optional[str] = None) -> ModuleType:
-#     """
-#     ref: https://stackoverflow.com/a/50395128
-#     """
-#     init_file = f'{pkg_dir}/__init__.py'
-#     assert fs.exist(init_file)
-#     if not name:
-#         name = fs.basename(pkg_dir)
-#     spec = importlib.util.spec_from_file_location(name, init_file)
-#     module = importlib.util.module_from_spec(spec)
-#     spec.loader.exec_module(module)
-#     # sys.modules[name] = module
-#     return module

@@ -1,6 +1,6 @@
 [project]
 name = "pyportable-crypto"
-version = "1.6.0a3"
+version = "1.6.0b2"
 description = "Crypto plugin for pyportable-installer project."
 authors = [{ name = "Likianta", email = "likianta@foxmail.com" }]
 exclude = ["pyportable_crypto/cipher_gen/_cache/*/"]

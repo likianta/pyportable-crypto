@@ -6,24 +6,39 @@ from argsense import cli
 from .cipher_gen import generate_cipher_package
 from .compilation import compile_module
 from .compilation import compile_package
+from .encryption import add_salt
 from .encryption import decrypt
 from .encryption import encrypt
 
 
 @cli
-def encrypt_text(text: str, key: t.Optional[str] = None) -> None:
+def encrypt_text(
+    text: str, key: t.Optional[str] = None, salty: bool = False
+) -> None:
     """
     params:
-        key: if not given, will generate a random key.
+        key (-k): if not given, will generate a random key.
+        salty (-s): if True, will add salt to the key.
     """
     if key is None:
         key = token_urlsafe()
-        print('random generated key: {}'.format(key), ':s1')
-    print(encrypt(data=text, key=key).decode('utf-8'), ':s1')
+        print('random generated key: {}'.format(key))
+    elif salty:
+        key = add_salt(key)
+        print('key with salt: {}'.format(key))
+    print(encrypt(data=text, key=key).decode('utf-8'))
 
 
 @cli
-def encrypt_file(file_i: str, file_o: str, key: str) -> None:
+def encrypt_file(
+    file_i: str, file_o: str, key: t.Optional[str] = None, salty: bool = False
+) -> None:
+    if key is None:
+        key = token_urlsafe()
+        print('random generated key: {}'.format(key))
+    elif salty:
+        key = add_salt(key)
+        print('key with salt: {}'.format(key))
     encrypt(file_i=file_i, file_o=file_o, key=key)
 
 
