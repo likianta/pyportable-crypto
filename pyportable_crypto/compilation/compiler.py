@@ -17,6 +17,7 @@ class PyCompiler:
     def __init__(
         self,
         key: tp.Optional[str] = None,
+        salty: bool = False,
         _runtime: tp.Optional[ModuleType] = None,
     ) -> None:
         if _runtime:
@@ -25,7 +26,9 @@ class PyCompiler:
             self._decrypt = _runtime.evaluate
         else:
             assert key, '`key` is required to generate the runtime package.'
-            self.runtime_pkgdir = generate_cipher_package(add_salt(key))
+            self.runtime_pkgdir = generate_cipher_package(
+                add_salt(key) if salty else key
+            )
             sys.path.insert(0, fs.parent(self.runtime_pkgdir))
             #   note: `self.runtime_pkgdir` indicates to
             #   `<some_dir>/pyportable_runtime/`. thus we can import

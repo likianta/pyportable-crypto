@@ -28,9 +28,10 @@ def compile_package(
     
     params:
         add_runtime_package (-r):
-            'inside': copy the runtime package to `dir_o`.
-            'outside': copy the runtime package to `dir_o`'s parent directory.
-            'no': do not copy the runtime package.
+            'inside': put runtime package insides `dir_o`.
+            'outside': put runtime package besides `dir_o`.
+            'no': do not put runtime package. this can be used when you want -
+                to compile multiple sources with a prebuilt runtime package.
     """
     compiler = PyCompiler(key)
     compiler.compile_dir(dir_i, dir_o)

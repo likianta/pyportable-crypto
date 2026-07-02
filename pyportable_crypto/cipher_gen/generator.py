@@ -69,7 +69,7 @@ def generate_cipher_package(
                 'cipher.py',  # file1
                 # optimizations
                 # https://chatgpt.com/share/6a4490af-5a60-83ee-8bc9-2503f9263f5e
-                '--lto=yes',
+                # '--lto=yes',
             ),
             cwd=dir1,
             verbose=True,
@@ -93,7 +93,7 @@ def generate_cipher_package(
                 some_encrypted_package.some_func()
                 ...
             """
-            
+
             import sys as _sys
             _current_pyversion = _sys.version_info[:2]  # type: tuple
             _target_pyversion = {0}

@@ -4,11 +4,11 @@
 
 - Maze machine.
 
-### 1.6.0 (wip)
+### 1.6.0 (2026-07-02)
 
 - Use ChaCha20 instead of AES for encryption.
 - Use Nuitka instead of Cython for compilation.
-- Force adding salt to key in compilation.
+- Function to add salt to key.
 
 ### 1.5.2 (2026-06-30)
 
