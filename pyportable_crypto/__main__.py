@@ -2,6 +2,7 @@ import typing as t
 from secrets import token_urlsafe
 
 from argsense import cli
+from neoprint import print
 
 from .cipher_gen import generate_cipher_package
 from .compilation import compile_module

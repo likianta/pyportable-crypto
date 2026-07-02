@@ -3,6 +3,7 @@ import typing as tp
 from types import ModuleType
 
 from lk_utils import fs
+from neoprint import print
 
 from ..cipher_gen import generate_cipher_package
 from ..encryption import add_salt
@@ -50,10 +51,10 @@ class PyCompiler:
 
     def compile_file(self, file_i: str, file_o: str) -> None:
         if fs.filename(file_i) == '__init__.py':
-            print(':rp', '[green]{}[/]'.format(file_o))
+            print(':rp', '[green dim]{}[/]'.format(file_o))
             fs.copy_file(file_i, file_o, True)
         else:
-            print(':rp', '[magenta]{}[/]'.format(file_o))
+            print(':rp', '[magenta dim]{}[/]'.format(file_o))
             text = self._encrypt(fs.load(file_i), add_shell=True)
             code = self._template.format(cipher_text=text)
             fs.dump(code, file_o)
@@ -71,6 +72,7 @@ class PyCompiler:
                     |- __init__.py
                     |- ...
         """
+        print('compiling: {} -> {}'.format(dir_i, dir_o), ':r2pi0')
         fs.clone_tree(dir_i, dir_o, True)
         # for d in fs.findall_dirs(dir_i):
         #     fs.make_dir(f'{dir_o}/{d.relpath}')
@@ -79,14 +81,13 @@ class PyCompiler:
             file_o = f'{dir_o}/{f.relpath}'
             if f.ext == 'py':
                 if f.name == '__init__.py':
-                    print(':rpi', '[green]{}[/]'.format(f.relpath))
+                    print(':rpi', '[green dim]{}[/]'.format(f.relpath))
                     fs.copy_file(file_i, file_o, True)
                 else:
-                    print(':rpi', '[magenta]{}[/]'.format(f.relpath))
+                    print(':rpi', '[magenta dim]{}[/]'.format(f.relpath))
                     text = self._encrypt(fs.load(file_i), add_shell=True)
                     code = self._template.format(cipher_text=text)
                     fs.dump(code, file_o)
             elif include_other_files:
-                print(':rpi', '[bright_black]{}[/]'.format(f.relpath))
+                print(':rpi', '[dim]{}[/]'.format(f.relpath))
                 fs.copy_file(file_i, file_o, True)
-        print(':i0s')

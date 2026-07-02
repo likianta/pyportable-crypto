@@ -3,10 +3,10 @@ import typing as tp
 from hashlib import md5
 from platform import system
 
-import neoprint as np
 from lk_utils import dedent
 from lk_utils import fs
 from lk_utils import run_cmd_args
+from neoprint import print
 
 
 def generate_cipher_package(
@@ -19,6 +19,7 @@ def generate_cipher_package(
     params:
         key: the secret key.
             - can be any string with any length.
+            - suggest adding salt with `../encryption/keygen.py:add_salt`.
             - cannot be empty.
     """
     from .. import __version__ as crypto_version
@@ -61,7 +62,7 @@ def generate_cipher_package(
     code = code.replace('__KEY__', key)  # TODO
     fs.dump(code, file1)
 
-    np.show(
+    print(
         ':v5',
         'compiling {} with secret key (this may take a while)'.format(
             fs.basename(file2)

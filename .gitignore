@@ -1,10 +1,9 @@
 /.idea/
 /dist/
 /pyportable_crypto/cipher_gen/_cache/*/
-__pycache__/
+/test/lk_utils_enc/
 
+__pycache__/
 .DS_Store
-*.dec.txt
-*.enc.txt
 
 !/pyportable_crypto/cipher_gen/_cache/.gitkeep
