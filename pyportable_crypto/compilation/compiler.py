@@ -22,7 +22,7 @@ class PyCompiler:
         if _runtime:
             self.runtime_pkgdir = fs.parent(tp.cast(str, _runtime.__file__))
             self._encrypt = _runtime.encrypt
-            self._decrypt = _runtime.decrypt
+            self._decrypt = _runtime.evaluate
         else:
             assert key, '`key` is required to generate the runtime package.'
             self.runtime_pkgdir = generate_cipher_package(add_salt(key))
@@ -34,7 +34,7 @@ class PyCompiler:
             import pyportable_runtime  # ty: ignore
 
             self._encrypt = pyportable_runtime.encrypt
-            self._decrypt = pyportable_runtime.decrypt
+            self._decrypt = pyportable_runtime.evaluate
 
         self._template = (
             'from pyportable_runtime import evaluate\n'

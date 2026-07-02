@@ -9,9 +9,9 @@ import pyportable_crypto as pyc
 @cli
 def compile():
     pkgdir = '.venv/Lib/site-packages/lk_utils'
-    pyc.compile_package(
-        pkgdir, 'test/lk_utils_enc', key=pyc.keygen.random_key()
-    )
+    key = pyc.keygen.random_key()
+    print(key, ':n')
+    pyc.compile_package(pkgdir, 'test/lk_utils_enc', key=key)
 
 
 @cli

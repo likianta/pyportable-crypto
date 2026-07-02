@@ -7,12 +7,11 @@ note:
     - do not use relative imports, nor importing custom modules.
 """
 
-import copy
-import struct
 from base64 import b64decode
 from base64 import b64encode
+from copy import copy
 from hashlib import sha256
-from re import sub
+from struct import unpack
 from typing import Literal
 from typing import Optional
 from typing import Union
@@ -30,7 +29,7 @@ def evaluate(
     ciphertext: bytes,
     _globals: Optional[dict] = None,
     _locals: Optional[dict] = None,
-) -> Optional[dict]:
+) -> None:
     assert _globals is None or type(_globals) is dict
     assert _locals is None or type(_locals) is dict
 
@@ -41,29 +40,30 @@ def evaluate(
     def __validate_code_form(file: str) -> None:
         with open(file, 'r', encoding='utf-8') as f:
             text = f.read().strip()
-        text = sub(r"b'[^\']+'", "b'...'", text)
-        # see template generation at `pyportable_installer.compilation.compiler
-        # .PyCompiler.__init__:_template`
-        if text != (
+        #   see template generation at `pyportable_crypto.compilation.compiler
+        #   .PyCompiler.__init__:_template`
+        enc_start = text.index("evaluate(b'") + 9
+        enc_end = text.rindex("', globals") + 3
+        text_masked = text[:enc_start] + "b'...', " + text[enc_end:]
+        if text_masked != (
             'from pyportable_runtime import evaluate\n'
             "evaluate(b'...', globals(), locals())"
         ):
             raise RuntimeError(
-                file,
                 'Decompling stopped because the source code was manipulated!',
+                file,
+                text_masked,
             )
 
     # __validate_self()
-    __validate_code_form(__file__)
+    __validate_code_form(_globals['__file__'] if _globals else __file__)
 
-    return __main(  # type: ignore
-        ciphertext, 'evaluate', globals=_globals or {}, locals=_locals or {}
-    )
+    __main(ciphertext, 'evaluate', globals=_globals or {}, locals=_locals or {})
 
 
 def __main(
     data: Union[str, bytes], action: Literal['encrypt', 'evaluate'], **kwargs
-) -> Union[bytes, dict]:
+) -> Optional[bytes]:
     # available keys for kwargs: globals (dict), locals (dict), add_shell (bool).
 
     # --------------------------------------------------------------------------
@@ -516,7 +516,7 @@ def __main(
             KC = len(key) // 4
             
             # Convert the key into ints
-            tk = [struct.unpack('>i', key[i:i + 4])[0] for i in range(0, len(key), 4)]
+            tk = [unpack('>i', key[i:i + 4])[0] for i in range(0, len(key), 4)]
             
             # Copy values into round key arrays
             for i in range(0, KC):
@@ -592,7 +592,7 @@ def __main(
                             self.T3[(t[(i + s2) % 4] >> 8) & 0xFF] ^
                             self.T4[t[(i + s3) % 4] & 0xFF] ^
                             self._Ke[r][i])
-                t = copy.copy(a)
+                t = copy(a)
             
             # The last round is special
             result = []
@@ -626,7 +626,7 @@ def __main(
                             self.T7[(t[(i + s2) % 4] >> 8) & 0xFF] ^
                             self.T8[t[(i + s3) % 4] & 0xFF] ^
                             self._Kd[r][i])
-                t = copy.copy(a)
+                t = copy(a)
             
             # The last round is special
             result = []
@@ -779,4 +779,5 @@ def __main(
             '`__PYPORTABLE_CRYPTO_HOOK__` dict.'
         )
         # del _globals, _locals
-        return _locals['__PYPORTABLE_CRYPTO_HOOK__']
+        # return _locals['__PYPORTABLE_CRYPTO_HOOK__']
+        _globals.update(_locals.pop('__PYPORTABLE_CRYPTO_HOOK__'))
