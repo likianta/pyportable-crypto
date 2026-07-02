@@ -1,7 +1,7 @@
+import os
 import sys
 import typing as tp
 from hashlib import md5
-from platform import system
 
 from lk_utils import dedent
 from lk_utils import fs
@@ -24,10 +24,6 @@ def generate_cipher_package(
     """
     from .. import __version__ as crypto_version
 
-    assert key, 'key cannot be empty!'
-    # assert re.compile(r'[a-zA-Z_]\w*'), \
-    #     'the dirname should be a valid python package name format!'
-
     dir0 = fs.here()
     dir1 = fs.there(
         '_cache/{}'.format(
@@ -43,17 +39,12 @@ def generate_cipher_package(
             if dir2 != dir3:
                 fs.make_link(dir2, dir3, True)
             return dir3
-    else:
-        fs.make_dirs(dir2)
+    fs.make_dirs(dir2)
 
     file0 = '{}/cipher_standalone.py'.format(dir0)
     file1 = '{}/cipher.py'.format(dir1)
-    file2 = '{}/cipher.{}'.format(
-        dir2, 'pyd' if system().lower() == 'windows' else 'so'
-    )
-    # file3 = '{}/cipher.{}'.format(
-    #     dir3, 'pyd' if system().lower() == 'windows' else 'so'
-    # )
+    file2 = '{}/cipher.{}'.format(dir2, 'pyd' if os.name == 'nt' else 'so')
+    # file3 = '{}/cipher.{}'.format(dir3, 'pyd' if os.name == 'nt' else 'so')
 
     # --------------------------------------------------------------------------
 
@@ -102,6 +93,7 @@ def generate_cipher_package(
                 some_encrypted_package.some_func()
                 ...
             """
+            
             import sys as _sys
             _current_pyversion = _sys.version_info[:2]  # type: tuple
             _target_pyversion = {0}
@@ -115,13 +107,14 @@ def generate_cipher_package(
                     )
                 )
             
-            from .cipher import decrypt  # noqa
-            from .cipher import encrypt  # noqa
+            from .cipher import encrypt
+            from .cipher import evaluate
             
             def setup() -> None:
                 import builtins
                 setattr(builtins, 'pyportable_runtime', _sys.modules[__name__])
             
+            __all__ = ['encrypt', 'evaluate', 'setup']
             __version__ = '{1}'
             '''
         ).format(pyversion, crypto_version),

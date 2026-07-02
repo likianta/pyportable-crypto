@@ -37,10 +37,8 @@ class PyCompiler:
             self._decrypt = pyportable_runtime.decrypt
 
         self._template = (
-            'import pyportable_runtime\n'
-            'globals().update('
-            'pyportable_runtime.decrypt({cipher_text}, globals(), locals())'
-            ')'
+            'from pyportable_runtime import evaluate\n'
+            'evaluate({cipher_text}, globals(), locals())'
         )
 
     @classmethod

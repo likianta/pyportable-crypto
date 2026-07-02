@@ -12,11 +12,12 @@ import struct
 from base64 import b64decode
 from base64 import b64encode
 from hashlib import sha256
+from re import sub
 from typing import Literal
 from typing import Optional
 from typing import Union
 
-__all__ = ['decrypt', 'encrypt']
+__all__ = ['encrypt', 'evaluate']
 
 
 def encrypt(plaintext: str, *, add_shell: bool = False) -> bytes:
@@ -25,7 +26,7 @@ def encrypt(plaintext: str, *, add_shell: bool = False) -> bytes:
     return __main(plaintext, 'encrypt', add_shell=add_shell)  # type: ignore
 
 
-def decrypt(
+def evaluate(
     ciphertext: bytes,
     _globals: Optional[dict] = None,
     _locals: Optional[dict] = None,
@@ -37,23 +38,15 @@ def decrypt(
         # TODO: check if self package had been modified.
         pass
 
-    def __validate_caller_form(file: str) -> None:
-        from re import sub
-        from textwrap import dedent
-
+    def __validate_code_form(file: str) -> None:
         with open(file, 'r', encoding='utf-8') as f:
             text = f.read().strip()
         text = sub(r"b'[^\']+'", "b'...'", text)
-        # see template generation at `pyportable_installer.compilers
-        # .pyportable_encryptor.PyportableEncryptor.__init__`
-        if (
-            text
-            != dedent(
-                """
-                from pyportable_runtime import decrypt
-                globals().update(decrypt(b'...', globals(), locals()))
-                """
-            ).strip()
+        # see template generation at `pyportable_installer.compilation.compiler
+        # .PyCompiler.__init__:_template`
+        if text != (
+            'from pyportable_runtime import evaluate\n'
+            "evaluate(b'...', globals(), locals())"
         ):
             raise RuntimeError(
                 file,
@@ -61,15 +54,15 @@ def decrypt(
             )
 
     # __validate_self()
-    # __validate_caller_form(globals_['__file__'])
+    __validate_code_form(__file__)
 
     return __main(  # type: ignore
-        ciphertext, 'decrypt', globals=_globals or {}, locals=_locals or {}
+        ciphertext, 'evaluate', globals=_globals or {}, locals=_locals or {}
     )
 
 
 def __main(
-    data: Union[str, bytes], action: Literal['encrypt', 'decrypt'], **kwargs
+    data: Union[str, bytes], action: Literal['encrypt', 'evaluate'], **kwargs
 ) -> Union[bytes, dict]:
     # available keys for kwargs: globals (dict), locals (dict), add_shell (bool).
 
