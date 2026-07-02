@@ -53,7 +53,7 @@ class PyCompiler:
             fs.copy_file(file_i, file_o, True)
         else:
             print(':rp', '[magenta dim]{}[/]'.format(file_o))
-            text = self._encrypt(fs.load(file_i), add_shell=True)
+            text = self._encrypt(fs.load(file_i))
             code = self._template.format(cipher_text=text)
             fs.dump(code, file_o)
 
@@ -83,7 +83,7 @@ class PyCompiler:
                     fs.copy_file(file_i, file_o, True)
                 else:
                     print(':rpi', '[magenta dim]{}[/]'.format(f.relpath))
-                    text = self._encrypt(fs.load(file_i), add_shell=True)
+                    text = self._encrypt(fs.load(file_i))
                     code = self._template.format(cipher_text=text)
                     fs.dump(code, file_o)
             elif include_other_files:

@@ -19,19 +19,15 @@ from typing import Union
 __all__ = ['encrypt', 'evaluate']
 
 
-def encrypt(plaintext: str, *, add_shell: bool = False) -> bytes:
+def encrypt(plaintext: str) -> bytes:
     # `*args` has no effect, just be compatible with
     #   `../encrypt.py:[func]encrypt_data`.
-    return __main(plaintext, 'encrypt', add_shell=add_shell)  # type: ignore
+    return __main(plaintext, 'encrypt')  # type: ignore
 
 
-def evaluate(
-    ciphertext: bytes,
-    _globals: Optional[dict] = None,
-    _locals: Optional[dict] = None,
-) -> None:
-    assert _globals is None or type(_globals) is dict
-    assert _locals is None or type(_locals) is dict
+def evaluate(ciphertext: bytes, _globals: dict, _locals: dict) -> None:
+    assert type(_globals) is dict
+    assert type(_locals) is dict
 
     def __validate_self() -> None:
         # TODO: check if self package had been modified.
@@ -56,16 +52,17 @@ def evaluate(
             )
 
     # __validate_self()
-    __validate_code_form(_globals['__file__'] if _globals else __file__)
+    __validate_code_form(_globals['__file__'])
 
-    __main(ciphertext, 'evaluate', globals=_globals or {}, locals=_locals or {})
+    __main(ciphertext, 'evaluate', _globals, _locals)
 
 
 def __main(
-    data: Union[str, bytes], action: Literal['encrypt', 'evaluate'], **kwargs
+    data: Union[str, bytes],
+    action: Literal['encrypt', 'evaluate'],
+    _globals: Optional[dict] = None,
+    _locals: Optional[dict] = None,
 ) -> Optional[bytes]:
-    # available keys for kwargs: globals (dict), locals (dict), add_shell (bool).
-
     # --------------------------------------------------------------------------
     # the following code is copied from `../pyaes_snippet.py`
     # fmt: off
@@ -711,7 +708,6 @@ def __main(
         return '__KEY__'
 
     def __encrypt_data(data: str, key: str) -> bytes:
-
         def _pad(s: str, size=16) -> str:
             bytelen = len(s.encode('utf-8'))
             return s + (size - bytelen % size) * chr(size - bytelen % size)
@@ -744,40 +740,10 @@ def __main(
         dec_data = _unpad(_dec_data).decode('utf-8')  # type: str
         return dec_data
 
-    # --------------------------------------------------------------------------
-
     if action == 'encrypt':
         assert isinstance(data, str)
-        if kwargs['add_shell']:
-            data += '\n__PYPORTABLE_CRYPTO_HOOK__.update(globals())'
-        #     data = __encrypt_data(data, key)
-        #     from textwrap import dedent
-        #     return dedent('''
-        #         from pyportable_runtime import decrypt
-        #         globals.update(decrypt({}, globals(), locals()))
-        #     ''').format(data).strip().encode('utf-8')
-        # else:
-        #     return __encrypt_data(data, key)
         return __encrypt_data(data, __example_keygen())
 
     else:  # 'decrypt'
         assert isinstance(data, bytes)
-
-        _globals: dict = kwargs['globals']
-        _locals: dict = kwargs['locals']
-        _locals['__PYPORTABLE_CRYPTO_HOOK__'] = {}
-
-        try:
-            exec(__decrypt_data(data, __example_keygen()), _globals, _locals)
-        except Exception:
-            raise
-
-        assert _locals['__PYPORTABLE_CRYPTO_HOOK__'], (
-            # it assumes the `plaintext` hadn't contained
-            # '__PYPORTABLE_CRYPTO_HOOK__.update(globals())' in its end lines.
-            'Invalid script code that has not hooked up or updated '
-            '`__PYPORTABLE_CRYPTO_HOOK__` dict.'
-        )
-        # del _globals, _locals
-        # return _locals['__PYPORTABLE_CRYPTO_HOOK__']
-        _globals.update(_locals.pop('__PYPORTABLE_CRYPTO_HOOK__'))
+        exec(__decrypt_data(data, __example_keygen()), _globals, _locals)
