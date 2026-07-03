@@ -1,4 +1,4 @@
-from . import cipher_gen
+from .cipher_gen import generate_cipher_package
 from .compilation import PyCompiler
 from .compilation import compile_module
 from .compilation import compile_package

@@ -22,8 +22,7 @@ def add_salt(key: str, salt: str = SALT) -> str:
 
 
 def random_key(bytelen: int = 32) -> str:
-    assert bytelen % 2 == 0
-    return secrets.token_hex(int(bytelen / 2))
+    return secrets.token_urlsafe(bytelen).replace('-', '_')
 
 
 def random_bytes(n: int = 32) -> bytes:

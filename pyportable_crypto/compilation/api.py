@@ -1,3 +1,4 @@
+import neoprint as np
 from lk_utils import fs
 
 from .compiler import PyCompiler
@@ -34,7 +35,8 @@ def compile_package(
                 to compile multiple sources with a prebuilt runtime package.
     """
     compiler = PyCompiler(key)
-    compiler.compile_dir(dir_i, dir_o)
+    with np.elevate_parent_level():
+        compiler.compile_dir(dir_i, dir_o)
     if add_runtime_package == 'inside':
         fs.make_link(
             compiler.runtime_pkgdir,

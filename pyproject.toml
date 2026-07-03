@@ -1,6 +1,6 @@
 [project]
 name = "pyportable-crypto"
-version = "1.6.0"
+version = "1.6.1a1"
 description = "Crypto plugin for pyportable-installer project."
 authors = [{ name = "Likianta", email = "likianta@foxmail.com" }]
 exclude = ["pyportable_crypto/cipher_gen/_cache/*/"]
@@ -10,7 +10,7 @@ dependencies = [
     "argsense>=1.1.2",
     "cryptography>=49.0.0",
     "lk-utils>=3.6.1",
-    "neoprint>=0.1.4",
+    "neoprint>=0.1.6b0",
     "nuitka>=4.1.3",
 ]
 
