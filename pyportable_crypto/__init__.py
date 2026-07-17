@@ -8,4 +8,4 @@ from .encryption import encrypt
 from .encryption import encrypt_data
 from .encryption import keygen
 
-__version__ = '1.6.0'
+__version__ = '1.6.1'

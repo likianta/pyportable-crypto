@@ -4,6 +4,10 @@
 
 - Maze machine.
 
+### 1.6.1 (2026-07-17)
+
+- Code tweaks.
+
 ### 1.6.0 (2026-07-02)
 
 - Use ChaCha20 instead of AES for encryption.
